@@ -36,6 +36,11 @@ function Login({ onLogin }) {
     <>
       <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+          <img
+            src="/setu.webp"
+            alt="Setu Logo"
+            className="mx-auto h-auto w-auto mb-6"
+          />
           <h2 className="mt-10 text-center text-2xl font-bold tracking-tight text-gray-900">
             Sign in to your account
           </h2>
@@ -77,7 +82,7 @@ function Login({ onLogin }) {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="email"
-                  className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                  className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-lime-600 sm:text-sm/6"
                 />
               </div>
             </div>
@@ -93,7 +98,7 @@ function Login({ onLogin }) {
                 <div className="text-sm">
                   <a
                     href="#"
-                    className="font-semibold text-indigo-600 hover:text-indigo-500"
+                    className="font-semibold text-lime-600 hover:text-lime-500"
                   >
                     Forgot password?
                   </a>
@@ -106,7 +111,7 @@ function Login({ onLogin }) {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                  className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-lime-600 sm:text-sm/6"
                 />
               </div>
             </div>
@@ -114,7 +119,7 @@ function Login({ onLogin }) {
             <div>
               <button
                 type="submit"
-                className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 cursor-pointer"
+                className="flex w-full justify-center rounded-md bg-lime-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-lime-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-600 cursor-pointer"
               >
                 Sign in
               </button>
@@ -128,7 +133,7 @@ function Login({ onLogin }) {
             Not a member?{" "}
             <Link
               to="/register"
-              className="font-semibold text-indigo-600 hover:text-indigo-600"
+              className="font-semibold text-lime-600 hover:text-lime-600"
             >
               Register
             </Link>
