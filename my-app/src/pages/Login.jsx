@@ -1,32 +1,32 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import GoogleButton from '../components/googlebutton';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import GoogleButton from "../components/googlebutton";
 
 function Login({ onLogin }) {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const formData = new FormData();
-      formData.append('username', email);
-      formData.append('password', password);
+      formData.append("username", email);
+      formData.append("password", password);
 
-      const response = await fetch('http://localhost:8000/token', {
-        method: 'POST',
-        body: formData
+      const response = await fetch("http://localhost:8000/token", {
+        method: "POST",
+        body: formData,
       });
       if (!response.ok) {
-        const errorData = await response.json()
+        const errorData = await response.json();
         throw new Error(errorData.detail);
       }
 
       const { access_token } = await response.json();
       onLogin(access_token);
-      navigate('/dashboard')
+      navigate("/dashboard");
     } catch (err) {
       setError(err.message);
     }
@@ -64,7 +64,10 @@ function Login({ onLogin }) {
         <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm/6 font-medium text-gray-900">
+              <label
+                htmlFor="email"
+                className="block text-sm/6 font-medium text-gray-900"
+              >
                 Email address
               </label>
               <div className="mt-2">
@@ -81,11 +84,17 @@ function Login({ onLogin }) {
 
             <div>
               <div className="flex items-center justify-between">
-                <label htmlFor="password" className="block text-sm/6 font-medium text-gray-900">
+                <label
+                  htmlFor="password"
+                  className="block text-sm/6 font-medium text-gray-900"
+                >
                   Password
                 </label>
                 <div className="text-sm">
-                  <a href="#" className="font-semibold text-indigo-600 hover:text-indigo-500">
+                  <a
+                    href="#"
+                    className="font-semibold text-indigo-600 hover:text-indigo-500"
+                  >
                     Forgot password?
                   </a>
                 </div>
@@ -105,54 +114,27 @@ function Login({ onLogin }) {
             <div>
               <button
                 type="submit"
-                className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 cursor-pointer"
               >
                 Sign in
               </button>
             </div>
-
           </form>
           <hr className="my-6 border-t border-gray-300" />
           <div className="mt-4">
             <GoogleButton />
           </div>
           <p className="mt-10 text-center text-sm/6 text-gray-500">
-            Not a member?{' '}
-            <Link to="/register" className="font-semibold text-indigo-600 hover:text-indigo-600">
+            Not a member?{" "}
+            <Link
+              to="/register"
+              className="font-semibold text-indigo-600 hover:text-indigo-600"
+            >
               Register
             </Link>
           </p>
-
         </div>
       </div>
-
-      {/* <div className="p-4 max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Login</h1>
-      {error && <div className="text-red-500 mb-4">{error}</div>}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block mb-1">Username:</label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="w-full p-2 border rounded"
-          />
-        </div>
-        <div>
-          <label className="block mb-1">Password:</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border rounded"
-          />
-        </div>
-        <button type="submit" className="w-full bg-blue-500 text-white p-2 rounded">
-          Login
-        </button>
-      </form>
-    </div> */}
     </>
   );
 }

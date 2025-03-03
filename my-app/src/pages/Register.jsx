@@ -11,7 +11,7 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (password !== confirmPassword) {
       setError("Passwords do not match!");
       return;
@@ -22,16 +22,15 @@ function Register() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),
-      }
-    );
+      });
 
-    if (!response.ok) {
+      if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Registration failed');
+        throw new Error(errorData.detail || "Registration failed");
       }
 
       console.log("User registered successfully");
-      navigate('/')
+      navigate("/");
     } catch (err) {
       setError(err.message);
     }
@@ -50,7 +49,10 @@ function Register() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="name" className="block text-sm/6 font-medium text-gray-900">
+            <label
+              htmlFor="name"
+              className="block text-sm/6 font-medium text-gray-900"
+            >
               Full Name
             </label>
             <div className="mt-2">
@@ -67,7 +69,10 @@ function Register() {
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm/6 font-medium text-gray-900">
+            <label
+              htmlFor="email"
+              className="block text-sm/6 font-medium text-gray-900"
+            >
               Email Address
             </label>
             <div className="mt-2">
@@ -84,7 +89,10 @@ function Register() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm/6 font-medium text-gray-900">
+            <label
+              htmlFor="password"
+              className="block text-sm/6 font-medium text-gray-900"
+            >
               Password
             </label>
             <div className="mt-2">
@@ -101,7 +109,10 @@ function Register() {
           </div>
 
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm/6 font-medium text-gray-900">
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm/6 font-medium text-gray-900"
+            >
               Confirm Password
             </label>
             <div className="mt-2">
@@ -117,21 +128,22 @@ function Register() {
             </div>
           </div>
 
-          <div>
-            <button
-              type="submit"
-              className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-              Register
-            </button>
-          </div>
+          <button
+            type="submit"
+            className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 cursor-pointer"
+          >
+            Register
+          </button>
         </form>
 
         <hr className="my-6 border-t border-gray-300" />
 
         <p className="mt-4 text-center text-sm/6 text-gray-500">
           Already have an account?{" "}
-          <Link to="/login" className="font-semibold text-indigo-600 hover:text-indigo-500">
+          <Link
+            to="/login"
+            className="font-semibold text-indigo-600 hover:text-indigo-500"
+          >
             Sign in
           </Link>
         </p>
