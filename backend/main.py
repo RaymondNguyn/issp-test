@@ -158,6 +158,7 @@ async def get_sensor_details(
     for data in sensor_data:
         data["_id"] = str(data["_id"])
 
+    print(sensor_data)
     return sensor_data
 
 

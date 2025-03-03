@@ -46,13 +46,14 @@ function DisplaySensor({ token }) {
 
   return (
     // Side nav 
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-gray-100">
       <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
 
-      {/* main contents here */}
       <div className="flex flex-col flex-1">
-      <TopNav />
+        <TopNav />
 
+        {/* Main content wrapper */}
+        <div className='p-6 transition-all ${isCollapsed ? "ml-[52px]" : "ml-[260px]"}'>
         <h1 className="text-2xl font-bold mb-4">Your Sensors</h1>
         {sensors.length === 0 ? (
           <p className="text-gray-500">No sensors added yet.</p>
@@ -73,6 +74,7 @@ function DisplaySensor({ token }) {
             ))}
           </div>
         )}
+        </div>
       </div>
     </div>
 

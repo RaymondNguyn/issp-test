@@ -20,12 +20,12 @@ export function TopNav() {
   const pathSegments = location.pathname.split("/").filter(Boolean);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
+    <header className="sticky top-0 z-40 border-b border-zinc-600 bg-zinc-800">
       <div className="flex h-16 items-center px-6 justify-between w-full">
         {/* Breadcrumb Navigation (Left) */}
         <div className="hidden md:block">
           <nav className="flex items-center space-x-2">
-            <a href="/" className="text-sm font-medium">
+            <a href="/" className="text-sm font-medium text-white">
               Home
             </a>
             {pathSegments.map((segment, index) => (
@@ -33,7 +33,7 @@ export function TopNav() {
                 <span className="text-gray-400">/</span>
                 <a
                   href={`/${pathSegments.slice(0, index + 1).join("/")}`}
-                  className="text-sm font-medium text-gray-600 hover:text-gray-900"
+                  className="text-sm font-medium text-white hover:text-white"
                 >
                   {segment.charAt(0).toUpperCase() + segment.slice(1)}
                 </a>
@@ -48,7 +48,7 @@ export function TopNav() {
             <a
               key={name}
               href={href}
-              className="text-gray-600 hover:text-gray-900 transition-colors"
+              className="text-white hover:text-gray-900 transition-colors"
               title={name}
             >
               <Icon className="h-6 w-6" />
@@ -57,7 +57,7 @@ export function TopNav() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center text-gray-600 hover:text-gray-900">
+              <button className="flex items-center text-white hover:text-gray-900">
                 <User className="h-6 w-6" />
               </button>
             </DropdownMenuTrigger>

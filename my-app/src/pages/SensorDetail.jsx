@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Sidebar } from "../components/sidenav";
 import { TopNav } from "../components/topnav";
+import { SensorChart } from "../components/Graph";
+import { SensorDataTable } from "../components/Table"; 
 
 function SensorDetail({ token }) {
   const { sensorId } = useParams(); // Get sensorId from URL
@@ -102,50 +104,32 @@ function SensorDetail({ token }) {
   if (error) return <div className="text-red-500">{error}</div>;
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen overflow-auto bg-gray-100">
       <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
 
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 ">
         <TopNav />
+        <div className="flex-1 overflow-auto p-6">
+
+
+        
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold">Sensor Details</h1>
+          <h1 className="text-2xl font-bold">Sensor Details: {sensorData[0].sensor_id}</h1>
           <button
             onClick={downloadSensorData}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
             disabled={sensorData.length === 0}
           >
             Download CSV
           </button>
         </div>
 
-        {sensorData.length > 0 ? (
-          sensorData.map((sensor, index) => (
-            <div key={index} className="bg-white p-6 rounded-lg shadow mb-4">
-              <p><strong>Sensor ID:</strong> {sensor.sensor_id}</p>
-              <p><strong>ADC:</strong> {sensor.adc}</p>
-              <p><strong>Position:</strong> {sensor.position}</p>
-              <p><strong>Roll:</strong> {sensor.roll}</p>
-              <p><strong>Pitch:</strong> {sensor.pitch}</p>
-              <p><strong>Temperature:</strong> {sensor.temperature}°C</p>
-              <p><strong>Timestamp:</strong> {new Date(sensor.timestamp).toLocaleString()}</p>
-
-              <h3 className="font-bold mt-4">Accelerometer:</h3>
-              <pre className="bg-gray-100 p-2 rounded">{JSON.stringify(sensor.accelerometer, null, 2)}</pre>
-
-              <h3 className="font-bold mt-4">Magnetometer:</h3>
-              <pre className="bg-gray-100 p-2 rounded">{JSON.stringify(sensor.magnetometer, null, 2)}</pre>
-
-              <h3 className="font-bold mt-4">Gyroscope:</h3>
-              <pre className="bg-gray-100 p-2 rounded">{JSON.stringify(sensor.gyroscope, null, 2)}</pre>
-            </div>
-          ))
-        ) : (
-          <p>No data available for this sensor.</p>
-        )}
+        {sensorData.length > 0 && <SensorChart data={sensorData} />}
+        <SensorDataTable sensorData={sensorData} />
       </div>
 
     </div>
-
+    </div>
   );
 }
 
