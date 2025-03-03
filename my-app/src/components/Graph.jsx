@@ -48,7 +48,7 @@ export const SensorChart = ({ data }) => {
         {sensorOptions.map((col) => (
           <button
             key={col}
-            className={`px-4 py-2 rounded-md ${
+            className={`px-2 py-1 rounded-md  ${
               selectedColumns.includes(col) ? "bg-blue-500 text-white" : "bg-gray-300"
             }`}
             onClick={() => toggleColumn(col)}
@@ -63,7 +63,7 @@ export const SensorChart = ({ data }) => {
         {["line", "bar", "area"].map((type) => (
           <button
             key={type}
-            className={`px-4 py-2 rounded-md ${
+            className={`px-2 py-1 rounded-md ${
               selectedChartType === type ? "bg-green-500 text-white" : "bg-gray-300"
             }`}
             onClick={() => setSelectedChartType(type)}

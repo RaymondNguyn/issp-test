@@ -5,6 +5,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from pymongo import MongoClient, DESCENDING
 from pydantic import BaseModel
 from sensor_model import *
+from project_model import *
 from typing import List, Optional
 from datetime import timedelta
 from auth import (
@@ -32,6 +33,7 @@ class UserCreate(BaseModel):
     email: str
     password: str
     sensors: Optional[List[str]] = []
+    projects: Optional[List[str]] = []
 
 
 class Sensor(BaseModel):
@@ -196,3 +198,54 @@ async def get_latest_sensors(current_user: str = Depends(get_current_user)):
     latest_sensors = list(sensor_collection.aggregate(pipeline))
 
     return latest_sensors
+
+@app.get("/api/projects", response_model=List[Project])
+async def get_user_projects(current_user: str = Depends(get_current_user)):
+    # Fetch the user's projects based on their email
+    user = users_collection.find_one({"email": current_user})
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    projects = list(project_collection.find({"email": current_user}))
+    
+    if not projects:
+        raise HTTPException(status_code=404, detail="No projects found for the user")
+    
+    # Format project data for response (convert MongoDB _id to string and include sensors)
+    formatted_projects = []
+    for project in projects:
+        formatted_project = {
+            "id": str(project["_id"]),
+            "project_name": project.get("project_name", "Unnamed Project"),
+            "sensors": project.get("sensors", []),  # Make sure this matches what your frontend expects
+            "created_at": project.get("created_at", ""),
+            "email": project.get("email", "")  # Include email if needed
+        }
+        formatted_projects.append(formatted_project)
+    print(formatted_projects)
+
+    return formatted_projects
+
+@app.post("/api/projects", response_model=dict)
+async def create_project(project: Project, current_user: str = Depends(get_current_user)):
+    project.email = current_user
+
+    # Check if project name already exists
+    existing_project = project_collection.find_one({"project_name": project.project_name})
+    if existing_project:
+        raise HTTPException(status_code=400, detail="Project with this name already exists")
+
+    # Add project creation timestamp
+    project.created_at = datetime.now()
+
+    project_dict = project.dict()
+    result = project_collection.insert_one(project_dict)
+
+    return {
+        "id": str(result.inserted_id),
+        "project_name": project.project_name,
+        "email": project.email,
+        "sensors": project.sensors,
+        "created_at": project.created_at,
+    }

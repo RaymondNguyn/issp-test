@@ -1,15 +1,32 @@
 import { useState, useEffect } from "react";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableFooter,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../components/ui/table";
 
+// **Flatten nested objects into columns**
+const flattenSensorData = (data) => {
+  return data.map((sensor) => ({
+    Sensor_ID: sensor.sensor_id ?? "N/A",
+    Temperature: sensor.temperature?.toFixed(2) ?? "N/A",
+    Position: sensor.position
+      ? sensor.position
+          .split(",")
+          .map((coord) => parseFloat(coord).toFixed(2))
+          .join(", ")
+      : "N/A",
+    Accelerometer: sensor.accelerometer
+      ? `X: ${sensor.accelerometer.x.toFixed(2)}, Y: ${sensor.accelerometer.y.toFixed(2)}, Z: ${sensor.accelerometer.z.toFixed(2)}`
+      : "N/A",
+    Magnetometer: sensor.magnetometer
+      ? `X: ${sensor.magnetometer.x.toFixed(2)}, Y: ${sensor.magnetometer.y.toFixed(2)}, Z: ${sensor.magnetometer.z.toFixed(2)}`
+      : "N/A",
+    Gyroscope: sensor.gyroscope
+      ? `X: ${sensor.gyroscope.x.toFixed(2)}, Y: ${sensor.gyroscope.y.toFixed(2)}, Z: ${sensor.gyroscope.z.toFixed(2)}`
+      : "N/A",
+    Timestamp: sensor.timestamp
+      ? new Date(sensor.timestamp).toLocaleString()
+      : "N/A",
+  }));
+};
+
+// **Main Table Component**
 export function SensorTable() {
   const [sensors, setSensors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -51,67 +68,48 @@ export function SensorTable() {
   if (loading) return <div>Loading sensor data...</div>;
   if (error) return <div>Error: {error}</div>;
 
+  const flattenedData = flattenSensorData(sensors);
+  const headers = Object.keys(flattenedData[0] || {});
+
   return (
-    <div className="border rounded-xl overflow-hidden p-4 border-gray-300">
-    <Table>
-      <TableCaption>Latest Sensor Data</TableCaption>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Sensor ID</TableHead>
-          <TableHead>Temperature</TableHead>
-          <TableHead>Position</TableHead>
-          <TableHead>Accelerometer</TableHead>
-          <TableHead>Magnetometer</TableHead>
-          <TableHead>Gyroscope</TableHead>
-          <TableHead className="text-right">Timestamp</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {sensors.map((sensor) => (
-          <TableRow key={sensor.sensor_id}>
-            <TableCell>{sensor.sensor_id}</TableCell>
-            <TableCell>{sensor.temperature?.toFixed(2)}°C</TableCell>
-            <TableCell>
-              {sensor.position
-                ? sensor.position
-                  .split(",") // Split by comma
-                  .map((coord) => parseFloat(coord).toFixed(2)) // Convert to float and round
-                  .join(", ") // Join back with a comma
-                : "No Data"}
-            </TableCell>
-            {/* Accelerometer */}
-            <TableCell>{`X: ${sensor.accelerometer.x.toFixed(
-              2
-            )}, Y: ${sensor.accelerometer.y.toFixed(
-              2
-            )}, Z: ${sensor.accelerometer.z.toFixed(2)}`}</TableCell>
+    <div className="w-full overflow-x-auto ">
+      <p className="font-bold">Recent Sensor Activity</p>
+      <table className="w-full border-collapse border border-gray-300 shadow-md">
+        {/* Table Header */}
+        <thead className="bg-gray-100 text-gray-700 uppercase text-sm">
+          <tr>
+            {headers.map((key) => (
+              <th key={key} className="border border-gray-300 px-4 py-2 text-left">
+                {key.replace("_", " ")}
+              </th>
+            ))}
+          </tr>
+        </thead>
 
-            
-            {/* Magnetometer */}
-            <TableCell>{`X: ${sensor.magnetometer.x.toFixed(
-              2
-            )}, Y: ${sensor.magnetometer.y.toFixed(
-              2
-            )}, Z: ${sensor.magnetometer.z.toFixed(2)}`}</TableCell>
-
-            {/* Gyroscope */}
-            <TableCell>{`X: ${sensor.gyroscope.x.toFixed(
-              2
-            )}, Y: ${sensor.gyroscope.y.toFixed(
-              2
-            )}, Z: ${sensor.gyroscope.z.toFixed(2)}`}</TableCell>
-            <TableCell className="text-right">
-              {new Date(sensor.timestamp).toLocaleString()}
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-      <TableFooter>
-        <TableRow>
-          <TableCell colSpan={3}>Total Sensors: {sensors.length}</TableCell>
-        </TableRow>
-      </TableFooter>
-    </Table>
+        {/* Table Body */}
+        <tbody>
+          {flattenedData.length ? (
+            flattenedData.map((row, rowIndex) => (
+              <tr
+                key={rowIndex}
+                className={`${rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-200 transition`}
+              >
+                {headers.map((key) => (
+                  <td key={key} className="border border-gray-300 px-4 py-2">
+                    {row[key] ?? "-"}
+                  </td>
+                ))}
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={headers.length} className="text-center py-4 text-gray-500">
+                No results.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }

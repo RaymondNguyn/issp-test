@@ -11,6 +11,9 @@ import Register from "./pages/Register";
 import ProtectedRoute from "./components/ProtectedRoute";
 import DisplaySensor from "./pages/Display-sensor";
 import SensorDetail from "./pages/SensorDetail";
+import Projects from "./pages/projects/Projects";
+import AddProject from "./pages/projects/Add-project"; // Import AddProject page
+import ProjectDetail from "./pages/projects/ProjectDetail"; // Import ProjectDetail page
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token"));
@@ -31,7 +34,13 @@ function App() {
         {/* If user is logged in, redirect from login to dashboard */}
         <Route
           path="/login"
-          element={token ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleLogin} />}
+          element={
+            token ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Login onLogin={handleLogin} />
+            )
+          }
         />
 
         {/* If user is logged in, show the dashboard */}
@@ -55,12 +64,44 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/sensors/:sensorId" element={<SensorDetail token={token} />} />
 
+        <Route
+          path="/sensors/:sensorId"
+          element={<SensorDetail token={token} />}
+        />
 
+        <Route
+          path="/projects"
+          element={
+            <ProtectedRoute token={token}>
+              <Projects token={token} />
+            </ProtectedRoute>
+          }
+        />
 
+        <Route
+          path="/add-projects"
+          element={
+            <ProtectedRoute token={token}>
+              <AddProject token={token} />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/" element={<Navigate to={token ? "/dashboard" : "/login"} replace />} />
+        {/* Project Detail page (where sensors can be added) */}
+        <Route
+          path="/projects/:projectId"
+          element={
+            <ProtectedRoute token={token}>
+              <ProjectDetail token={token} />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/"
+          element={<Navigate to={token ? "/dashboard" : "/login"} replace />}
+        />
       </Routes>
     </Router>
   );

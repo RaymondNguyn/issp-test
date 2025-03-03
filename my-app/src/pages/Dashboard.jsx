@@ -8,7 +8,6 @@ function Dashboard({ onLogout, token }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sensorName, setSensorName] = useState("");
   const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
 
@@ -36,32 +35,6 @@ function Dashboard({ onLogout, token }) {
     } catch (err) {
       setError(err.message);
       setLoading(false);
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await fetch(
-        "http://localhost:8000/api/user/add-sensor",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ sensorName }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to add sensor");
-      }
-
-      alert("Sensor added successfully");
-      setSensorName("");
-    } catch (err) {
-      setError(err.message);
     }
   };
 
@@ -123,10 +96,10 @@ function Dashboard({ onLogout, token }) {
 
 
             <div
-              class="container mx-auto mt-12 px-4 grid grid-cols-1 sm:grid-cols-2 gap-6 justify-center"
+              class="container mx-auto mt-12 px-4 grid grid-cols-1 sm:grid-cols-2 gap-6 justify-center mb-8"
             >
               <a
-                href="/view-projects"
+                href="projects"
                 class="bg-green-600 text-white text-center py-5 px-6 max-w-xs w-full rounded-lg shadow-lg hover:bg-green-700 transition duration-300 text-lg flex justify-center mx-auto"
               >
                 View Projects
@@ -138,30 +111,6 @@ function Dashboard({ onLogout, token }) {
                 Add Projects
               </a>
             </div>
-
-
-
-            <form onSubmit={handleSubmit}>
-              <label
-                htmlFor="sensorName"
-                className="block text-sm font-medium text-gray-900"
-              >
-                Sensor
-              </label>
-              <input
-                type="text"
-                id="sensorName"
-                value={sensorName}
-                onChange={(e) => setSensorName(e.target.value)}
-                className="block w-[300px] rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm"
-              />
-              <button
-                type="submit"
-                className="mt-2 bg-indigo-600 text-white px-4 py-2 rounded"
-              >
-                Add Sensor
-              </button>
-            </form>
             <SensorTable ></SensorTable>
           </div>
         </div>

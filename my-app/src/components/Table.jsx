@@ -1,6 +1,4 @@
 import * as React from "react";
-import { Button } from "../components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 
 // **Flatten nested objects into columns**
 const flattenSensorData = (data) => {
@@ -38,35 +36,43 @@ export function SensorDataTable({ sensorData }) {
   const headers = Object.keys(flattenedData[0] || {});
 
   return (
-    <div className="w-full">
-      <div className="rounded-md border overflow-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {headers.map((key) => (
-                <TableHead key={key}>{key.replace("_", " ")}</TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {flattenedData.length ? (
-              flattenedData.map((row, rowIndex) => (
-                <TableRow key={rowIndex}>
-                  {headers.map((key) => (
-                    <TableCell key={key}>{row[key] ?? "-"}</TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={headers.length} className="h-24 text-center">
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+    <div className="w-full overflow-x-auto">
+      <table className="w-full border-collapse border border-gray-300 shadow-md">
+        {/* Table Header */}
+        <thead className="bg-gray-100 text-gray-700 uppercase text-sm">
+          <tr>
+            {headers.map((key) => (
+              <th key={key} className="border border-gray-300 px-4 py-2 text-left">
+                {key.replace("_", " ")}
+              </th>
+            ))}
+          </tr>
+        </thead>
+
+        {/* Table Body */}
+        <tbody>
+          {flattenedData.length ? (
+            flattenedData.map((row, rowIndex) => (
+              <tr
+                key={rowIndex}
+                className={`${rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-200 transition`}
+              >
+                {headers.map((key) => (
+                  <td key={key} className="border border-gray-300 px-4 py-2">
+                    {row[key] ?? "-"}
+                  </td>
+                ))}
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={headers.length} className="text-center py-4 text-gray-500">
+                No results.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }
