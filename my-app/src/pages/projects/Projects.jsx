@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sidebar } from "../../components/sidenav";
-import { TopNav } from "../../components/topnav";
+import { Layout } from "../../components/Layout";
 
 function Projects({ onLogout, token }) {
   const [data, setData] = useState(null);
@@ -24,7 +23,8 @@ function Projects({ onLogout, token }) {
       if (!response.ok) {
         if (response.status === 401) {
           onLogout();
-          throw new Error("Session expired. Please login again.");
+          setError("Session expired. Please login again.");
+          return;
         }
         throw new Error("Network response was not ok");
       }
@@ -37,58 +37,76 @@ function Projects({ onLogout, token }) {
     }
   };
 
+  const handleViewDetails = (projectId) => {
+    console.log("Button clicked! Navigating to project ID:", projectId); // Log the button click
+    if (!projectId) {
+      console.error("Project ID is undefined");
+      return;
+    }
+    console.log("Navigating to:", `/projects/${projectId}`); // Log the navigation path
+    navigate(`/projects/${projectId}`); // Navigate to the project detail page
+  };
+
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="flex h-screen overflow-auto bg-gray-100">
-      {/* Sidebar - Fixed on the left */}
-      <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
+    <Layout
+      onLogout={onLogout}
+      isCollapsed={isCollapsed}
+      setIsCollapsed={setIsCollapsed}
+    >
+      <div
+        className={`p-6 transition-all ${isCollapsed ? "ml-[52px]" : "ml-0"}`}
+      >
+        <div className="flex justify-between items-center mb-4">
+          {data && (
+            <div>
+              <h1 className="text-2xl font-bold">Your Projects</h1>
+            </div>
+          )}
+        </div>
 
-      {/* Main Content Area */}
-      <div className="flex flex-col flex-1">
-        {/* Fixed Top Navigation */}
-        <TopNav />
-
-        {/* Content below TopNav */}
-        <div className={`p-6 transition-all ${isCollapsed ? "ml-[52px]" : "ml-0"}`}>
-          <div className="flex justify-between items-center mb-4">
-            {data && (
-              <div>
-                <h1 className="text-2xl font-bold">Your Projects</h1>
-              </div>
-            )}
-          </div>
-
-          {/* Display Projects */}
-          {data && data.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {data.map((project, index) => (
+        {/* Display Projects */}
+        {data && data.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {data.map((project, index) => {
+              console.log("Project:", project); // Log the project object
+              console.log("Project ID:", project.id); // Log the project ID
+              return (
                 <div
                   key={index}
-                  className="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition duration-300"
+                  className="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition duration-300 relative"
                 >
-                  <h2 className="text-xl font-semibold mb-2">{project.project_name}</h2>
+                  <h2 className="text-xl font-semibold mb-2">
+                    {project.project_name}
+                  </h2>
                   <p className="text-sm text-gray-600">
                     <strong>Date:</strong> {project.created_at}
                   </p>
                   <p className="text-sm text-gray-600">
-                    <strong>Description:</strong> {project.description || "No description available."}
+                    <strong>Description:</strong>{" "}
+                    {project.description || "No description available."}
                   </p>
                   <button
-                    onClick={() => navigate(`/projects/${project.id}`)} // Navigate to project details
-                    className="block mt-4 bg-green-500 text-white text-center px-4 py-2 rounded-md hover:bg-green-600"
+                    onClick={() => {
+                      console.log("Project ID:", project.id); // Log the project ID
+                      handleViewDetails(project.id);
+                    }}
+                    className="block mt-4 bg-green-500 text-white text-center px-4 py-2 rounded-md hover:bg-green-600 w-full"
                   >
                     View Details
                   </button>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-center text-gray-600">No projects found. Add one!</p>
-          )}
-        </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-center text-gray-600">
+            No projects found. Add one!
+          </p>
+        )}
       </div>
-    </div>
+    </Layout>
   );
 }
 

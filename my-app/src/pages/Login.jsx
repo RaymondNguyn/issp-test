@@ -96,12 +96,13 @@ function Login({ onLogin }) {
                   Password
                 </label>
                 <div className="text-sm">
-                  <a
-                    href="#"
+                  {/* Replace <a> with <Link> for proper navigation */}
+                  <Link
+                    to="/forgot-password"
                     className="font-semibold text-lime-600 hover:text-lime-500"
                   >
                     Forgot password?
-                  </a>
+                  </Link>
                 </div>
               </div>
               <div className="mt-2">
@@ -140,34 +141,6 @@ function Login({ onLogin }) {
           </p>
         </div>
       </div>
-
-      {/* <div className="p-4 max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Login</h1>
-      {error && <div className="text-red-500 mb-4">{error}</div>}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block mb-1">Username:</label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="w-full p-2 border rounded"
-          />
-        </div>
-        <div>
-          <label className="block mb-1">Password:</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border rounded"
-          />
-        </div>
-        <button type="submit" className="w-full bg-blue-500 text-white p-2 rounded">
-          Login
-        </button>
-      </form>
-    </div> */}
     </>
   );
 }

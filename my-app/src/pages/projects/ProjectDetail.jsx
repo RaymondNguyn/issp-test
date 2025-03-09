@@ -1,120 +1,67 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { Sidebar } from "../../components/sidenav";
-import { TopNav } from "../../components/topnav";
+import { useParams } from "react-router-dom";
+import { Layout } from "../../components/Layout";
 
-const ProjectDetail = () => {
-  const { projectId } = useParams();
-  const [sensors, setSensors] = useState([]);
-  const [newSensor, setNewSensor] = useState({
-    sensor_id: "",
-    status: "",
-    temperature: "",
-    position: "",
-  });
+const ProjectDetail = ({ onLogout, token }) => {
+  const { projectId } = useParams(); // Get the projectId from the URL
+  const [project, setProject] = useState(null);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     const fetchProjectDetails = async () => {
       try {
         const token = localStorage.getItem("token");
         const headers = { Authorization: `Bearer ${token}` };
-        const response = await fetch(`http://localhost:8000/api/projects/${projectId}`, { headers });
 
-        setSensors(response.data.sensors_owned); // Assuming API returns the sensors
+        // Fetch project details
+        const response = await fetch(
+          `http://localhost:8000/api/projects/${projectId}`,
+          { headers }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch project details");
+        }
+
+        const data = await response.json();
+        setProject(data);
       } catch (err) {
-        setError(err.response?.data?.detail || "Failed to fetch project details");
+        setError(err.message);
       }
     };
 
-    fetchProjectDetails();
+    if (projectId) {
+      fetchProjectDetails(); // Fetch project details only if projectId is defined
+    }
   }, [projectId]);
 
-  const handleAddSensor = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const headers = { Authorization: `Bearer ${token}` };
-      const response = await axios.post(
-        `http://localhost:8000/api/projects/${projectId}/add-sensor`,
-        newSensor,
-        { headers }
-      );
+  if (error) {
+    return <div className="text-red-500">{error}</div>;
+  }
 
-      if (response.status === 200) {
-        setSensors([...sensors, newSensor]); // Update local state
-        setNewSensor({
-          sensor_id: "",
-          status: "",
-          temperature: "",
-          position: "",
-        }); // Reset sensor form fields
-      }
-    } catch (err) {
-      setError(err.response?.data?.detail || "Failed to add sensor");
-    }
-  };
+  if (!project) {
+    return <div>Loading...</div>;
+  }
 
   return (
-    <div>
-      <Sidebar />
-      <TopNav />
-      <div className="container">
-        <h2>Project Details</h2>
-        {error && <div className="error">{error}</div>}
-
-        <h3>Sensors</h3>
-        <ul>
-          {sensors.map((sensor, index) => (
-            <li key={index}>
-              Sensor ID: {sensor.sensor_id} - Status: {sensor.status} - Temperature: {sensor.temperature}°C - Position: {sensor.position}
-            </li>
-          ))}
-        </ul>
-
-        <h3>Add New Sensor</h3>
-        <div className="form-group">
-          <label>Sensor ID</label>
-          <input
-            type="text"
-            name="sensor_id"
-            value={newSensor.sensor_id}
-            onChange={(e) => setNewSensor({ ...newSensor, sensor_id: e.target.value })}
-          />
+    <Layout
+      onLogout={onLogout}
+      isCollapsed={isCollapsed}
+      setIsCollapsed={setIsCollapsed}
+    >
+      <div className="p-6">
+        <h2 className="text-2xl font-bold mb-4">Project Details</h2>
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-xl font-semibold mb-2">{project.project_name}</h3>
+          <p className="text-gray-700 mb-2">{project.description}</p>
+          <p className="text-gray-500">Date: {project.date}</p>
+          <p className="text-gray-500">
+            Created At: {new Date(project.created_at).toLocaleString()}
+          </p>
         </div>
-        <div className="form-group">
-          <label>Status</label>
-          <input
-            type="text"
-            name="status"
-            value={newSensor.status}
-            onChange={(e) => setNewSensor({ ...newSensor, status: e.target.value })}
-          />
-        </div>
-        <div className="form-group">
-          <label>Temperature</label>
-          <input
-            type="number"
-            name="temperature"
-            value={newSensor.temperature}
-            onChange={(e) => setNewSensor({ ...newSensor, temperature: e.target.value })}
-          />
-        </div>
-        <div className="form-group">
-          <label>Position</label>
-          <input
-            type="text"
-            name="position"
-            value={newSensor.position}
-            onChange={(e) => setNewSensor({ ...newSensor, position: e.target.value })}
-          />
-        </div>
-
-        <button type="button" onClick={handleAddSensor}>
-          Add Sensor
-        </button>
       </div>
-    </div>
+    </Layout>
   );
 };
 

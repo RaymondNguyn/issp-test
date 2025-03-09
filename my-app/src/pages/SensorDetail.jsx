@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Sidebar } from "../components/sidenav";
-import { TopNav } from "../components/topnav";
+import { Layout } from "../components/Layout";
 import { SensorChart } from "../components/Graph";
-import { SensorDataTable } from "../components/Table"; 
+import { SensorDataTable } from "../components/Table";
 
-function SensorDetail({ token }) {
+function SensorDetail({ onLogout, token }) {
   const { sensorId } = useParams(); // Get sensorId from URL
   const [sensorData, setSensorData] = useState([]); // Now an array
   const [loading, setLoading] = useState(true);
@@ -18,11 +17,14 @@ function SensorDetail({ token }) {
 
   const fetchSensorData = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/api/sensors/${sensorId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `http://localhost:8000/api/sensors/${sensorId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to fetch sensor details");
@@ -38,45 +40,50 @@ function SensorDetail({ token }) {
     }
   };
 
-
   const convertToCSV = (data) => {
     if (data.length === 0) return "";
 
-
     const sample = data[0];
-    const fields = Object.keys(sample).filter(key =>
-      !['_id', 'accelerometer', 'magnetometer', 'gyroscope'].includes(key)
+    const fields = Object.keys(sample).filter(
+      (key) =>
+        !["_id", "accelerometer", "magnetometer", "gyroscope"].includes(key)
     );
 
-
     const nestedFields = [
-      'accelerometer.x', 'accelerometer.y', 'accelerometer.z',
-      'magnetometer.x', 'magnetometer.y', 'magnetometer.z',
-      'gyroscope.x', 'gyroscope.y', 'gyroscope.z'
+      "accelerometer.x",
+      "accelerometer.y",
+      "accelerometer.z",
+      "magnetometer.x",
+      "magnetometer.y",
+      "magnetometer.z",
+      "gyroscope.x",
+      "gyroscope.y",
+      "gyroscope.z",
     ];
 
     const allFields = [...fields, ...nestedFields];
-    let csv = allFields.join(',') + '\n';
-    data.forEach(item => {
-      const row = allFields.map(field => {
-        if (field.includes('.')) {
-
-          const [parent, child] = field.split('.');
+    let csv = allFields.join(",") + "\n";
+    data.forEach((item) => {
+      const row = allFields.map((field) => {
+        if (field.includes(".")) {
+          const [parent, child] = field.split(".");
           return item[parent] && item[parent][child] !== undefined
             ? item[parent][child]
-            : '';
+            : "";
         } else {
-          return item[field] !== undefined ? item[field] : '';
+          return item[field] !== undefined ? item[field] : "";
         }
       });
 
-
-      csv += row.map(value => {
-        if (value.toString().includes(',')) {
-          return `"${value}"`;
-        }
-        return value;
-      }).join(',') + '\n';
+      csv +=
+        row
+          .map((value) => {
+            if (value.toString().includes(",")) {
+              return `"${value}"`;
+            }
+            return value;
+          })
+          .join(",") + "\n";
     });
 
     return csv;
@@ -104,17 +111,16 @@ function SensorDetail({ token }) {
   if (error) return <div className="text-red-500">{error}</div>;
 
   return (
-    <div className="flex h-screen overflow-auto bg-gray-100">
-      <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-
-      <div className="flex flex-col flex-1 ">
-        <TopNav />
-        <div className="flex-1 overflow-auto p-6">
-
-
-        
+    <Layout
+      onLogout={onLogout}
+      isCollapsed={isCollapsed}
+      setIsCollapsed={setIsCollapsed}
+    >
+      <div className="flex-1 overflow-auto p-6">
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold">Sensor Details: {sensorData[0].sensor_id}</h1>
+          <h1 className="text-2xl font-bold">
+            Sensor Details: {sensorData[0].sensor_id}
+          </h1>
           <button
             onClick={downloadSensorData}
             className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
@@ -127,9 +133,7 @@ function SensorDetail({ token }) {
         {sensorData.length > 0 && <SensorChart data={sensorData} />}
         <SensorDataTable sensorData={sensorData} />
       </div>
-
-    </div>
-    </div>
+    </Layout>
   );
 }
 

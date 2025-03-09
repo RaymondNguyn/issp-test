@@ -1,14 +1,14 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import List, Optional
-from sensor_model import SensorData
+from typing import List
 
 class Project(BaseModel):
-    id: str
-    email: str
     project_name: str
-    sensors: Optional[List[str]] = []
-    created_at: datetime = datetime.now()
+    email: str
+    description: str
+    date: str
+    sensors: List[str] = []
+    created_at: datetime = None
 
     @classmethod
     def from_mongo(cls, document):

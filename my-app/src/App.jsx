@@ -1,10 +1,6 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-} from "react-router-dom";
-import { useState, useEffect } from "react";
+// src/App.jsx
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useState } from "react";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Register from "./pages/Register";
@@ -12,98 +8,115 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import DisplaySensor from "./pages/Display-sensor";
 import SensorDetail from "./pages/SensorDetail";
 import Projects from "./pages/projects/Projects";
-import AddProject from "./pages/projects/Add-project"; // Import AddProject page
-import ProjectDetail from "./pages/projects/ProjectDetail"; // Import ProjectDetail page
+import AddProject from "./pages/projects/Add-project";
+import ProjectDetail from "./pages/projects/ProjectDetail";
+import ForgotPassword from "./pages/passwords/ForgotPass"; // Updated path
+import ResetPassword from "./pages/passwords/ResetPass"; // Updated path
+import { useNavigate } from "react-router-dom";
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token"));
+  const navigate = useNavigate();
 
-  const handleLogin = (newToken) => {
+  const handleLogin = (newToken, userEmail) => {
     setToken(newToken);
     localStorage.setItem("token", newToken);
+    localStorage.setItem("userEmail", userEmail);
   };
 
   const handleLogout = () => {
+    console.log("Logging out...");
     setToken(null);
     localStorage.removeItem("token");
+    localStorage.removeItem("userEmail");
+    navigate("/login");
   };
 
   return (
-    <Router>
-      <Routes>
-        {/* If user is logged in, redirect from login to dashboard */}
-        <Route
-          path="/login"
-          element={
-            token ? (
-              <Navigate to="/dashboard" replace />
-            ) : (
-              <Login onLogin={handleLogin} />
-            )
-          }
-        />
+    <Routes>
+      {/* Default route */}
+      <Route
+        path="/"
+        element={
+          token ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
 
-        {/* If user is logged in, show the dashboard */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute token={token}>
-              <Dashboard onLogout={handleLogout} token={token} />
-            </ProtectedRoute>
-          }
-        />
+      {/* Login route */}
+      <Route
+        path="/login"
+        element={
+          token ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <Login onLogin={handleLogin} />
+          )
+        }
+      />
 
-        {/* Register page */}
-        <Route path="/register" element={<Register />} />
+      {/* Forgot Password route */}
+      <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        <Route
-          path="/sensors"
-          element={
-            <ProtectedRoute token={token}>
-              <DisplaySensor token={token} />
-            </ProtectedRoute>
-          }
-        />
+      {/* Reset Password route */}
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
 
-        <Route
-          path="/sensors/:sensorId"
-          element={<SensorDetail token={token} />}
-        />
+      {/* Dashboard route */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute token={token}>
+            <Dashboard onLogout={handleLogout} token={token} />
+          </ProtectedRoute>
+        }
+      />
 
-        <Route
-          path="/projects"
-          element={
-            <ProtectedRoute token={token}>
-              <Projects token={token} />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/add-projects"
-          element={
-            <ProtectedRoute token={token}>
-              <AddProject token={token} />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Project Detail page (where sensors can be added) */}
-        <Route
-          path="/projects/:projectId"
-          element={
-            <ProtectedRoute token={token}>
-              <ProjectDetail token={token} />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/"
-          element={<Navigate to={token ? "/dashboard" : "/login"} replace />}
-        />
-      </Routes>
-    </Router>
+      {/* Other routes */}
+      <Route path="/register" element={<Register />} />
+      <Route
+        path="/sensors"
+        element={
+          <ProtectedRoute token={token}>
+            <DisplaySensor onLogout={handleLogout} token={token} />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/sensors/:sensorId"
+        element={
+          <ProtectedRoute token={token}>
+            <SensorDetail token={token} />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/projects"
+        element={
+          <ProtectedRoute token={token}>
+            <Projects onLogout={handleLogout} token={token} />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/add-projects"
+        element={
+          <ProtectedRoute token={token}>
+            <AddProject onLogout={handleLogout} token={token} />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/projects/:projectId"
+        element={
+          <ProtectedRoute token={token}>
+            <ProjectDetail token={token} />
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
   );
 }
 
