@@ -239,17 +239,15 @@ async def create_project(project: Project, current_user: str = Depends(get_curre
         print("Received project data:", project.dict())
 
         project.email = current_user
+        project.created_at = datetime.now()
 
         existing_project = project_collection.find_one({"project_name": project.project_name, "email": current_user})
         if existing_project:
             raise HTTPException(status_code=400, detail="Project with this name already exists")
 
-        project.created_at = datetime.now()
-
         project_dict = project.dict()
-        print("Project data to insert:", project_dict)
-
         result = project_collection.insert_one(project_dict)
+
         if not result.inserted_id:
             raise HTTPException(status_code=500, detail="Failed to insert project into database")
 
@@ -265,6 +263,7 @@ async def create_project(project: Project, current_user: str = Depends(get_curre
     except Exception as e:
         print("Error creating project:", str(e))
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/api/projects", response_model=List[Project])
 async def get_user_projects(current_user: str = Depends(get_current_user)):
@@ -307,6 +306,26 @@ async def get_project(project_id: str, current_user: str = Depends(get_current_u
     
     project["id"] = str(project["_id"])
     return project
+
+@app.get("/api/projects/{project_id}/sensors")
+async def get_project_sensors(project_id: str, current_user: str = Depends(get_current_user)):
+    try:
+        project_object_id = ObjectId(project_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid project ID")
+
+    project = project_collection.find_one({"_id": project_object_id, "email": current_user})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    sensor_ids = project.get("sensors", [])
+    sensors = list(sensor_collection.find({"sensor_id": {"$in": sensor_ids}}))
+
+    for sensor in sensors:
+        sensor["_id"] = str(sensor["_id"])
+
+    return sensors
+
 
 # Forgot Password Endpoint
 @app.post("/forgot-password")

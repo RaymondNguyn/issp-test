@@ -16,10 +16,9 @@ function Projects({ onLogout, token }) {
   const fetchData = async () => {
     try {
       const response = await fetch("http://localhost:8000/api/projects", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
+
       if (!response.ok) {
         if (response.status === 401) {
           onLogout();
@@ -28,8 +27,22 @@ function Projects({ onLogout, token }) {
         }
         throw new Error("Network response was not ok");
       }
-      const jsonData = await response.json();
-      setData(jsonData);
+
+      const projects = await response.json();
+
+      // Fetch sensor data for each project
+      const projectsWithSensors = await Promise.all(
+        projects.map(async (project) => {
+          const sensorResponse = await fetch(
+            `http://localhost:8000/api/projects/${project.id}/sensors`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const sensors = sensorResponse.ok ? await sensorResponse.json() : [];
+          return { ...project, sensors };
+        })
+      );
+
+      setData(projectsWithSensors);
       setLoading(false);
     } catch (err) {
       setError(err.message);
@@ -44,7 +57,7 @@ function Projects({ onLogout, token }) {
       return;
     }
     console.log("Navigating to:", `/projects/${projectId}`); // Log the navigation path
-    navigate(`/projects/${projectId}`); // Navigate to the project detail page
+    navigate(`/projects/${projectId}/sensors`); // Navigate to the project detail page
   };
 
   if (loading) return <div>Loading...</div>;
@@ -96,6 +109,21 @@ function Projects({ onLogout, token }) {
                   >
                     View Details
                   </button>
+                  {project.sensors.length > 0 ? (
+                    <div className="text-sm text-gray-600">
+                      <strong>Sensors:</strong>
+                      <ul>
+                        {project.sensors.map((sensor) => (
+                          <li key={sensor.sensor_id}>
+                            {sensor.sensorName} (Status: {sensor.status}, Temp:{" "}
+                            {sensor.temperature}°C)
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-600">No sensors linked</p>
+                  )}
                 </div>
               );
             })}

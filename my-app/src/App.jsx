@@ -88,7 +88,7 @@ function App() {
         path="/sensors/:sensorId"
         element={
           <ProtectedRoute token={token}>
-            <SensorDetail token={token} />
+            <SensorDetail onLogout={handleLogout} token={token} />
           </ProtectedRoute>
         }
       />
@@ -109,10 +109,10 @@ function App() {
         }
       />
       <Route
-        path="/projects/:projectId"
+        path="/projects/:projectId/sensors"
         element={
           <ProtectedRoute token={token}>
-            <ProjectDetail token={token} />
+            <ProjectDetail onLogout={handleLogout} token={token} />
           </ProtectedRoute>
         }
       />

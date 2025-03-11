@@ -15,15 +15,13 @@ function SensorDetail({ onLogout, token }) {
     fetchSensorData();
   }, []);
 
+  const { projectId } = useParams();
+
   const fetchSensorData = async () => {
     try {
       const response = await fetch(
-        `http://localhost:8000/api/sensors/${sensorId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        `http://localhost:8000/api/projects/${projectId}/sensors`,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (!response.ok) {
@@ -32,7 +30,6 @@ function SensorDetail({ onLogout, token }) {
 
       const data = await response.json();
       setSensorData(data);
-      console.log("Fetched sensor data:", data);
       setLoading(false);
     } catch (err) {
       setError(err.message);
