@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom"; // Added useNavigate
+import { useParams, useNavigate } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 
 function Assets({ onLogout }) {
@@ -7,8 +7,8 @@ function Assets({ onLogout }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const { projectId } = useParams(); // Get the projectId from the URL
-  const navigate = useNavigate(); // Initialize navigate
+  const { projectId } = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchProjectDetails();
@@ -50,7 +50,13 @@ function Assets({ onLogout }) {
   };
 
   const handleBackToProjects = () => {
-    navigate("/projects"); // Navigate back to the projects page
+    navigate("/projects");
+  };
+
+  const formatDate = (dateString) => {
+    const options = { year: "numeric", month: "long", day: "numeric" };
+    const date = new Date(dateString);
+    return date.toLocaleDateString(undefined, options);
   };
 
   if (loading) {
@@ -90,11 +96,14 @@ function Assets({ onLogout }) {
       setIsCollapsed={setIsCollapsed}
     >
       <div className={`p-6 ${isCollapsed ? "ml-[52px]" : "ml-0"}`}>
-        <h1 className="text-2xl font-bold mb-6">This is the Assets Page</h1>
+        <h1 className="text-2xl font-bold mb-6">Assets</h1>
 
         {project && (
           <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold mb-4">Project Details</h2>
+            {/* <h2 className="text-xl font-semibold mb-4">
+              {project.project_name}
+            </h2> */}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-gray-600 mb-2">Project Name:</p>
@@ -110,21 +119,24 @@ function Assets({ onLogout }) {
                   <p>{project.description}</p>
                 </div>
               )}
-            </div>
-
-            <div className="mt-8">
-              <h3 className="text-lg font-semibold mb-4">Assets</h3>
-              <div className="bg-gray-100 p-4 rounded text-center">
-                <p className="text-gray-600">
-                  No assets found for this project.
-                </p>
-                <p className="mt-2">
-                  Assets functionality will be implemented here.
+              <div>
+                <p className="text-gray-600 mb-2">Created Date:</p>
+                <p className="font-medium">{formatDate(project.created_at)}</p>
+              </div>
+              <div>
+                <p className="text-gray-600 mb-2">Project Date:</p>
+                <p className="font-medium">{formatDate(project.date)}</p>
+              </div>
+              <div>
+                <p className="text-gray-600 mb-2">Number of Sensors:</p>
+                <p className="font-medium">
+                  {project.sensors && project.sensors.length > 0
+                    ? project.sensors.length
+                    : "None"}
                 </p>
               </div>
             </div>
 
-            {/* Button to go back to the Projects page */}
             <div className="mt-6 flex justify-start">
               <button
                 onClick={handleBackToProjects}
