@@ -3,15 +3,18 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from pymongo import MongoClient, DESCENDING
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime, timedelta
 from typing import List, Optional
 from bson import ObjectId
 import secrets
 import smtplib
+import uuid
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from project_model import Project
+from fastapi import HTTPException
+from fastapi.responses import JSONResponse
 from auth import (
     get_password_hash,
     verify_password,
@@ -233,19 +236,30 @@ async def get_latest_sensors(current_user: str = Depends(get_current_user)):
 
     return latest_sensors
 
+# Projects
+
 @app.post("/api/projects", response_model=dict)
 async def create_project(project: Project, current_user: str = Depends(get_current_user)):
     try:
         print("Received project data:", project.dict())
 
+        # Set the email and created_at fields
         project.email = current_user
         project.created_at = datetime.now()
-
+        
+        # Check if project with same name already exists for this user
         existing_project = project_collection.find_one({"project_name": project.project_name, "email": current_user})
         if existing_project:
             raise HTTPException(status_code=400, detail="Project with this name already exists")
 
+        # Convert the project to a dictionary for MongoDB
         project_dict = project.dict()
+        
+        # Use the UUID as MongoDB _id
+        project_dict["_id"] = project_dict["id"]
+        del project_dict["id"]
+        
+        # Insert the project into the database
         result = project_collection.insert_one(project_dict)
 
         if not result.inserted_id:
@@ -265,7 +279,7 @@ async def create_project(project: Project, current_user: str = Depends(get_curre
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/projects", response_model=List[Project])
+@app.get("/api/projects", response_model=List[dict])
 async def get_user_projects(current_user: str = Depends(get_current_user)):
     user = users_collection.find_one({"email": current_user})
     
@@ -275,7 +289,7 @@ async def get_user_projects(current_user: str = Depends(get_current_user)):
     projects = list(project_collection.find({"email": current_user}))
     
     if not projects:
-        raise HTTPException(status_code=404, detail="No projects found for the user")
+        return []  # Return empty list instead of 404 error
     
     formatted_projects = []
     for project in projects:
@@ -294,18 +308,33 @@ async def get_user_projects(current_user: str = Depends(get_current_user)):
 
 @app.get("/api/projects/{project_id}", response_model=Project)
 async def get_project(project_id: str, current_user: str = Depends(get_current_user)):
-    try:
-        project_object_id = ObjectId(project_id)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail="Invalid project ID")
-
-    project = project_collection.find_one({"_id": project_object_id, "email": current_user})
+    # Try to find the project by the string ID (UUID)
+    project = project_collection.find_one({"_id": project_id, "email": current_user})
+    
+    # If not found, try with ObjectId for backward compatibility
+    if not project:
+        try:
+            project_object_id = ObjectId(project_id)
+            project = project_collection.find_one({"_id": project_object_id, "email": current_user})
+        except Exception:
+            pass
     
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     
     project["id"] = str(project["_id"])
     return project
+
+@app.get("/api/projects/{project_id}/assets", response_model=List[dict])
+async def get_project_assets(project_id: str, current_user: str = Depends(get_current_user)):
+    """Get all assets for a specific project."""
+    # Validate project exists and user has access
+    project = project_collection.find_one({"_id": project_id, "email": current_user})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found or access denied")
+    
+    # For now, return an empty list (placeholder)
+    return []
 
 @app.get("/api/projects/{project_id}/sensors")
 async def get_project_sensors(project_id: str, current_user: str = Depends(get_current_user)):
@@ -327,35 +356,51 @@ async def get_project_sensors(project_id: str, current_user: str = Depends(get_c
     return sensors
 
 
-# Forgot Password Endpoint
-@app.post("/forgot-password")
-async def forgot_password(request: ForgotPasswordRequest):
-    user = users_collection.find_one({"email": request.email})
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    reset_token = generate_reset_token()
-    reset_token_expiry = datetime.now() + timedelta(hours=1)
-
-    users_collection.update_one(
-        {"email": request.email},
-        {"$set": {"reset_token": reset_token, "reset_token_expiry": reset_token_expiry}},
-    )
-
-    send_reset_email(request.email, reset_token)
-    return {"message": "Password reset email sent"}
-
-# Reset Password Endpoint
-@app.post("/reset-password")
-async def reset_password(request: ResetPasswordRequest):
-    user = users_collection.find_one({"reset_token": request.token})
-    if not user or user["reset_token_expiry"] < datetime.now():
-        raise HTTPException(status_code=400, detail="Invalid or expired token")
-
-    hashed_password = get_password_hash(request.new_password)
-    users_collection.update_one(
-        {"reset_token": request.token},
-        {"$set": {"password": hashed_password}, "$unset": {"reset_token": "", "reset_token_expiry": ""}},
-    )
-
-    return {"message": "Password reset successfully"}
+@app.delete("/api/projects/{project_id}", response_model=dict)
+async def delete_project(project_id: str, current_user: str = Depends(get_current_user)):
+    """Delete a specific project by ID for the current user."""
+    from fastapi.responses import JSONResponse
+    
+    try:
+        print(f"Attempting to delete project: {project_id}")
+        print(f"Current user: {current_user}")
+        
+        # Check if project exists - use _id instead of id
+        project = project_collection.find_one({"_id": project_id, "email": current_user})
+        print(f"Project found: {project is not None}")
+        
+        if not project:
+            # Additional debug - also check using _id
+            project_check = project_collection.find_one({"_id": project_id})
+            if project_check:
+                print(f"Project exists but email mismatch. Project email: {project_check.get('email')}")
+            else:
+                print(f"No project found with ID: {project_id}")
+            
+            return JSONResponse(
+                status_code=404,
+                content={"detail": "Project not found or access denied"}
+            )
+        
+        # Delete the project - use _id instead of id
+        result = project_collection.delete_one({"_id": project_id, "email": current_user})
+        
+        if result.deleted_count == 0:
+            return JSONResponse(
+                status_code=404,
+                content={"detail": "Project not found or already deleted"}
+            )
+            
+        return {
+            "message": "Project successfully deleted",
+            "deleted_count": result.deleted_count,
+            "project_id": project_id
+        }
+    except Exception as e:
+        import traceback
+        print(f"Error deleting project {project_id}:", str(e))
+        print(traceback.format_exc())
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Server error: {str(e)}"}
+        )

@@ -12,6 +12,7 @@ import AddProject from "./pages/projects/Add-project";
 import ProjectDetail from "./pages/projects/ProjectDetail";
 import ForgotPassword from "./pages/passwords/ForgotPass"; // Updated path
 import ResetPassword from "./pages/passwords/ResetPass"; // Updated path
+import Assets from "./pages/projects/Assets";
 import { useNavigate } from "react-router-dom";
 
 function App() {
@@ -115,6 +116,18 @@ function App() {
             <ProjectDetail onLogout={handleLogout} token={token} />
           </ProtectedRoute>
         }
+      />
+      <Route
+        path="/assets/:projectId"
+        element={
+          <ProtectedRoute token={token}>
+            <Assets onLogout={handleLogout} token={token} />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/projects/:projectId/assets"
+        element={<Assets onLogout={handleLogout} />}
       />
     </Routes>
   );
