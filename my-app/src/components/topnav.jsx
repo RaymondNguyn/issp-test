@@ -1,6 +1,6 @@
 import { useLocation } from "react-router-dom";
 import React from "react";
-import { User, Bell, LogOut, Settings } from "lucide-react";
+import { User, Bell, LogOut, Settings, Shield } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -18,6 +18,7 @@ const navigation = [
 export function TopNav() {
   const location = useLocation();
   const pathSegments = location.pathname.split("/").filter(Boolean);
+  const isAdmin = localStorage.getItem("isAdmin") === "true";
 
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-600 bg-zinc-800">
@@ -55,6 +56,16 @@ export function TopNav() {
             </a>
           ))}
 
+          {isAdmin && (
+            <a
+              href="/admin"
+              className="text-white hover:text-gray-900 transition-colors"
+              title="Admin Dashboard"
+            >
+              <Shield className="h-6 w-6" />
+            </a>
+          )}
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center text-white hover:text-gray-900">
@@ -74,6 +85,13 @@ export function TopNav() {
                   <Settings className="h-4 w-4" /> Settings
                 </a>
               </DropdownMenuItem>
+              {isAdmin && (
+                <DropdownMenuItem asChild>
+                  <a href="/admin" className="flex items-center gap-2">
+                    <Shield className="h-4 w-4" /> Admin Dashboard
+                  </a>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
                 <a href="/logout" className="flex items-center gap-2 text-red-500">

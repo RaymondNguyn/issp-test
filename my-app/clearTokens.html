@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Tokens</title>
+</head>
+<body>
+    <h2>Click the button to clear authentication tokens:</h2>
+    <button onclick="clearTokens()">Clear Tokens</button>
+    <p id="status"></p>
+
+    <script>
+        function clearTokens() {
+            localStorage.removeItem("token");
+            localStorage.removeItem("isAdmin");
+            document.getElementById("status").textContent = "Tokens cleared! You can close this page and refresh your app.";
+        }
+    </script>
+</body>
+</html>

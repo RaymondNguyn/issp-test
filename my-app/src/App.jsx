@@ -12,38 +12,70 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import DisplaySensor from "./pages/Display-sensor";
 import SensorDetail from "./pages/SensorDetail";
 import Projects from "./pages/projects/Projects";
-import AddProject from "./pages/projects/Add-project"; // Import AddProject page
-import ProjectDetail from "./pages/projects/ProjectDetail"; // Import ProjectDetail page
+import AddProject from "./pages/projects/Add-project";
+import ProjectDetail from "./pages/projects/ProjectDetail";
+import AdminDashboard from "./pages/AdminDashboard";
+import EditUser from "./pages/EditUser";
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token"));
+  const [isAdmin, setIsAdmin] = useState(localStorage.getItem("isAdmin") === "true");
 
-  const handleLogin = (newToken) => {
+  const handleLogin = (newToken, admin = false) => {
     setToken(newToken);
+    setIsAdmin(admin);
     localStorage.setItem("token", newToken);
+    localStorage.setItem("isAdmin", admin);
   };
 
   const handleLogout = () => {
     setToken(null);
+    setIsAdmin(false);
     localStorage.removeItem("token");
+    localStorage.removeItem("isAdmin");
   };
 
   return (
     <Router>
       <Routes>
-        {/* If user is logged in, redirect from login to dashboard */}
         <Route
           path="/login"
           element={
             token ? (
-              <Navigate to="/dashboard" replace />
+              <Navigate to={isAdmin ? "/admin" : "/dashboard"} replace />
             ) : (
               <Login onLogin={handleLogin} />
             )
           }
         />
 
-        {/* If user is logged in, show the dashboard */}
+        {/* Admin routes */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute token={token}>
+              {isAdmin ? (
+                <AdminDashboard onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )}
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/edit-user/:userId"
+          element={
+            <ProtectedRoute token={token}>
+              {isAdmin ? (
+                <EditUser />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )}
+            </ProtectedRoute>
+          }
+        />
+
         <Route
           path="/dashboard"
           element={
@@ -53,7 +85,6 @@ function App() {
           }
         />
 
-        {/* Register page */}
         <Route path="/register" element={<Register />} />
 
         <Route
@@ -88,7 +119,6 @@ function App() {
           }
         />
 
-        {/* Project Detail page (where sensors can be added) */}
         <Route
           path="/projects/:projectId"
           element={
@@ -100,7 +130,7 @@ function App() {
 
         <Route
           path="/"
-          element={<Navigate to={token ? "/dashboard" : "/login"} replace />}
+          element={<Navigate to={token ? (isAdmin ? "/admin" : "/dashboard") : "/login"} replace />}
         />
       </Routes>
     </Router>

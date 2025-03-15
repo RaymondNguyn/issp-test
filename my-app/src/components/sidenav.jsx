@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Home,
   BarChart2,
@@ -10,7 +11,7 @@ import {
 } from "lucide-react";
 
 const navigation = [
-  { name: "Dashboard", href: "/", icon: Home },
+  { name: "Dashboard", href: "/dashboard", icon: Home },
   { name: "Analytics", href: "/analytics", icon: BarChart2 },
   { name: "Projects", href: "/projects", icon: Folder },
   { name: "Sensors", href: "/sensors", icon: ThermometerSun },
@@ -23,15 +24,15 @@ const bottomNavigation = [
 
 export function Sidebar({ isCollapsed, setIsCollapsed }) {
   const NavItem = ({ item }) => (
-    <a
-      href={item.href}
+    <Link
+      to={item.href}
       className={`flex items-center rounded-md px-3 py-2 text-sm font-medium transition-colors 
         text-white hover:bg-zinc-900 hover:text-gray-200
         ${isCollapsed ? "justify-center px-2" : ""}`}
     >
       <item.icon className={`h-4 w-4 text-white ${!isCollapsed ? "mr-3" : ""}`} />
       {!isCollapsed && <span>{item.name}</span>}
-    </a>
+    </Link>
   );
 
   return (
@@ -46,9 +47,9 @@ export function Sidebar({ isCollapsed, setIsCollapsed }) {
           }`}
         >
           {!isCollapsed && (
-            <a href="/" className="flex items-center font-bold text-white">
+            <Link to="/dashboard" className="flex items-center font-bold text-white">
               <span className="text-lg">SETU TECHNOLOGIES INC</span>
-            </a>
+            </Link>
           )}
           <button
             className="ml-auto h-8 w-8 flex items-center justify-center rounded-md hover:bg-zinc-900 "

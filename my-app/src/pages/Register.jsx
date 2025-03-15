@@ -8,6 +8,7 @@ function Register() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,12 +30,33 @@ function Register() {
         throw new Error(errorData.detail || "Registration failed");
       }
 
-      console.log("User registered successfully");
-      navigate("/");
+      setSuccess(true);
+      setTimeout(() => {
+        navigate("/login");
+      }, 3000);
     } catch (err) {
       setError(err.message);
     }
   };
+
+  if (success) {
+    return (
+      <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+          <img
+            src="/setu.webp"
+            alt="Setu Logo"
+            className="mx-auto h-auto w-auto mb-6"
+          />
+          <div className="bg-green-50 border border-green-200 text-green-800 rounded-lg p-4 text-center">
+            <h2 className="text-xl font-semibold mb-2">Registration Successful!</h2>
+            <p>Your account has been created and is pending admin approval.</p>
+            <p className="mt-2 text-sm">You will be redirected to the login page shortly...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
@@ -47,10 +69,17 @@ function Register() {
         <h2 className="mt-10 text-center text-2xl/9 font-bold tracking-tight text-gray-900">
           Create an Account
         </h2>
+        <p className="mt-2 text-center text-sm text-gray-600">
+          Note: New accounts require admin approval before access
+        </p>
       </div>
 
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4 mb-4">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>

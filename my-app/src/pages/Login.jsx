@@ -24,9 +24,10 @@ function Login({ onLogin }) {
         throw new Error(errorData.detail);
       }
 
-      const { access_token } = await response.json();
-      onLogin(access_token);
-      navigate("/dashboard");
+      const data = await response.json();
+      localStorage.setItem("isAdmin", data.is_admin);
+      onLogin(data.access_token, data.is_admin);
+      navigate(data.is_admin ? "/admin" : "/dashboard");
     } catch (err) {
       setError(err.message);
     }
@@ -46,7 +47,7 @@ function Login({ onLogin }) {
           </h2>
           {error && (
             <div
-              className="flex items-center p-4 mb-4 mt-4 text-sm text-red-800 border border-red-300 rounded-lg bg-red-50  dark:text-red-400 dark:border-red-800"
+              className="flex items-center p-4 mb-4 mt-4 text-sm text-red-800 border border-red-300 rounded-lg bg-red-50 dark:text-red-400 dark:border-red-800"
               role="alert"
             >
               <svg
@@ -77,6 +78,7 @@ function Login({ onLogin }) {
               </label>
               <div className="mt-2">
                 <input
+                  id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -106,6 +108,7 @@ function Login({ onLogin }) {
               </div>
               <div className="mt-2">
                 <input
+                  id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -140,34 +143,6 @@ function Login({ onLogin }) {
           </p>
         </div>
       </div>
-
-      {/* <div className="p-4 max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Login</h1>
-      {error && <div className="text-red-500 mb-4">{error}</div>}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block mb-1">Username:</label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="w-full p-2 border rounded"
-          />
-        </div>
-        <div>
-          <label className="block mb-1">Password:</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border rounded"
-          />
-        </div>
-        <button type="submit" className="w-full bg-blue-500 text-white p-2 rounded">
-          Login
-        </button>
-      </form>
-    </div> */}
     </>
   );
 }
