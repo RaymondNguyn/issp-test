@@ -9,10 +9,12 @@ function Dashboard({ onLogout, token }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [weather, setWeather] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchData();
+    fetchWeather();
   }, []);
 
   const fetchData = async () => {
@@ -37,6 +39,30 @@ function Dashboard({ onLogout, token }) {
       setLoading(false);
     }
   };
+
+  const fetchWeather = async () => {
+    if (!navigator.geolocation) {
+      setWeather({ error: "Geolocation is not supported by your browser." });
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      const { latitude, longitude } = position.coords;
+      try {
+        const response = await fetch(
+          `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=5ed3e9677354856cfba2054cfbf2feab`
+        );
+        const weatherData = await response.json();
+        setWeather({
+          temp: weatherData.main.temp,
+          condition: weatherData.weather[0].description,
+          location: weatherData.name,
+        });
+      } catch (error) {
+        setWeather({ error: "Failed to fetch weather data." });
+      }
+    });
+  };
+
 
   if (loading) return <div>Loading...</div>;
 
@@ -67,10 +93,27 @@ function Dashboard({ onLogout, token }) {
             >
               Logout
             </button> */}
-
-
+          <div className="bg-gradient-to-r from-blue-500 to-blue-700 text-white p-6 rounded-lg shadow-lg max-w-md mx-auto mb-6 flex items-center justify-between">
+            {weather ? (
+              weather.error ? (
+                <p className="text-red-300 font-semibold">{weather.error}</p>
+              ) : (
+                <div className="flex items-center space-x-4">
+                  <img src={` https://openweathermap.org/img/wn/10d@2x.png`} alt="WeatherIcon" className="w-14 h-14" />
+                  <div>
+                    <h2 className="text-xl font-semibold">{weather.location}</h2>
+                    <p className="text-lg">{weather.condition}</p>
+                    <p className="text-2xl font-bold">{weather.temp}°C</p>
+                  </div>
+                </div>
+              )
+            ) : (
+              <p>Loading weather...</p>
+            )}
           </div>
 
+          </div>
+          
           <div>
 
             <div className="flex-grow flex flex-col md:flex-row justify-center items-center py-24 bg-gray-100 space-y-6 md:space-y-0 md:space-x-12">
