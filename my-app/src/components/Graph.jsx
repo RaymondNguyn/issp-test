@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   LineChart,
   Line,
@@ -14,23 +14,49 @@ import {
   Area,
 } from "recharts";
 
+// **Dynamic Sensor Chart Component**
 export const SensorChart = ({ data }) => {
-  const [selectedColumns, setSelectedColumns] = useState(["temperature"]);
   const [selectedChartType, setSelectedChartType] = useState("line");
+  const [selectedColumns, setSelectedColumns] = useState([]);
 
-  // Available sensor options (each gyroscope axis is now separate)
-  const sensorOptions = ["temperature", "roll", "pitch", "gyroscope_x", "gyroscope_y", "gyroscope_z"];
+  // Function to recursively extract numeric sensor fields
+  const extractNumericFields = (obj, prefix = "") => {
+    let fields = {};
+    Object.entries(obj).forEach(([key, value]) => {
+      const newKey = prefix ? `${prefix}_${key}` : key; // Flatten nested keys (e.g., "gyroscope_x")
 
-  // Format data for the chart
-  const formattedData = data.map((item) => ({
-    timestamp: new Date(item.timestamp).toLocaleString(),
-    temperature: item.temperature,
-    roll: item.roll,
-    pitch: item.pitch,
-    gyroscope_x: item.gyroscope?.x,
-    gyroscope_y: item.gyroscope?.y,
-    gyroscope_z: item.gyroscope?.z,
-  }));
+      if (typeof value === "number") {
+        fields[newKey] = value;
+      } else if (typeof value === "object" && value !== null) {
+        Object.assign(fields, extractNumericFields(value, newKey)); // Recursively flatten nested objects
+      }
+    });
+    return fields;
+  };
+
+  // Extract all available sensor options dynamically
+  const sensorOptions = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    
+    let keys = new Set();
+    data.forEach((item) => {
+      const numericFields = extractNumericFields(item.readings || item); // Extract from "readings" or root object
+      Object.keys(numericFields).forEach((key) => keys.add(key));
+    });
+
+    return [...keys];
+  }, [data]);
+
+  // Format data for charting
+  const formattedData = useMemo(() => {
+    return data.map((item) => {
+      const numericFields = extractNumericFields(item.readings || item);
+      return {
+        timestamp: new Date(item.timestamp).toLocaleString(),
+        ...numericFields,
+      };
+    });
+  }, [data]);
 
   // Toggle column selection
   const toggleColumn = (col) => {
@@ -43,12 +69,12 @@ export const SensorChart = ({ data }) => {
     <div className="p-4">
       <h2 className="text-xl font-bold mb-2">Sensor Data Graph</h2>
 
-      {/* Buttons to select data columns */}
-      <div className="mb-4 space-x-2">
+      {/* Buttons to select data columns dynamically */}
+      <div className="mb-4 flex flex-wrap gap-2">
         {sensorOptions.map((col) => (
           <button
             key={col}
-            className={`px-2 py-1 rounded-md  ${
+            className={`px-2 py-1 rounded-md ${
               selectedColumns.includes(col) ? "bg-blue-500 text-white" : "bg-gray-300"
             }`}
             onClick={() => toggleColumn(col)}
@@ -59,7 +85,7 @@ export const SensorChart = ({ data }) => {
       </div>
 
       {/* Buttons to switch between chart types */}
-      <div className="mb-4 space-x-2">
+      <div className="mb-4 flex gap-2">
         {["line", "bar", "area"].map((type) => (
           <button
             key={type}
@@ -73,7 +99,7 @@ export const SensorChart = ({ data }) => {
         ))}
       </div>
 
-      {/* Graph Display */}
+      {/* Display Chart */}
       <ResponsiveContainer width="100%" height={400}>
         {selectedChartType === "line" && (
           <LineChart data={formattedData}>

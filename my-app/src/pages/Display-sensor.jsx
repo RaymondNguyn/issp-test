@@ -7,7 +7,7 @@ function DisplaySensor({ token }) {
   const [sensors, setSensors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sensorName, setSensorName] = useState("");  // Added sensorName state
+  const [sensorName, setSensorName] = useState("");  
   const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
 
@@ -17,7 +17,7 @@ function DisplaySensor({ token }) {
 
   const fetchSensors = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/displaySensor', {
+      const response = await fetch('http://localhost:8000/api/sensors', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -44,25 +44,22 @@ function DisplaySensor({ token }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(
-        'http://localhost:8000/api/user/add-sensor',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({ sensorName }),
-        }
-      );
+      const response = await fetch('http://localhost:8000/api/user/add-sensor', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ sensorName }),
+      });
 
       if (!response.ok) {
         throw new Error('Failed to add sensor');
       }
 
       alert("Sensor added successfully");
-      setSensorName(""); // Clear the input field after successful addition
-      fetchSensors(); // Refresh the sensor list
+      setSensorName(""); 
+      fetchSensors();
     } catch (err) {
       setError(err.message);
     }
@@ -78,13 +75,13 @@ function DisplaySensor({ token }) {
       <div className="flex flex-col flex-1">
         <TopNav />
 
-        <div className='p-6 transition-all ${isCollapsed ? "ml-[52px]" : "ml-[260px]"}'>
+        <div className={`p-6 transition-all ${isCollapsed ? "ml-[52px]" : "ml-[260px]"}`}>
           <h1 className="text-2xl font-bold mb-4">Your Sensors</h1>
 
           {/* Add Sensor Form */}
           <form onSubmit={handleSubmit} className="mb-6">
             <label htmlFor="sensorName" className="block text-sm font-medium text-gray-900">
-              Add Sensors
+              Add Sensor
             </label>
             <input
               type="text"
@@ -102,17 +99,33 @@ function DisplaySensor({ token }) {
             <p className="text-gray-500">No sensors added yet.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {sensors.map((sensor, index) => (
+              {sensors.map((sensor) => (
                 <button
-                  key={index}
-                  onClick={() => navigate(`/sensors/${sensor}`)} // Navigate to details page
+                  key={sensor.sensor_id}
+                  onClick={() => navigate(`/sensors/${sensor.sensor_id}`)}
                   className="bg-white p-4 rounded-lg shadow hover:shadow-md transition-shadow w-full text-left cursor-pointer"
                 >
                   <div className="flex items-center space-x-2">
                     <div className="h-3 w-3 bg-green-500 rounded-full"></div>
-                    <h2 className="text-lg font-semibold">{sensor}</h2>
+                    <h2 className="text-lg font-semibold">{sensor.name}</h2>
                   </div>
-                  <p className="text-gray-600 mt-2">Sensor ID: {index + 1}</p>
+                  <p className="text-gray-600 mt-2">Sensor ID: {sensor.sensor_id}</p>
+
+                  {/* Display alerts */}
+                  {sensor.alerts && Object.keys(sensor.alerts).length > 0 ? (
+                    <div className="mt-2">
+                      <p className="font-semibold">Alerts:</p>
+                      <ul className="text-sm">
+                        {Object.entries(sensor.alerts).map(([key, status]) => (
+                          <li key={key} className={status === "danger" ? "text-red-500" : "text-gray-700"}>
+                            {key}: {status}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm mt-2">No alerts</p>
+                  )}
                 </button>
               ))}
             </div>
