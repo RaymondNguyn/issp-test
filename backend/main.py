@@ -21,6 +21,7 @@ from auth import (
     create_access_token,
     get_current_user,
 )
+from project_model import Project, Asset
 
 app = FastAPI()
 
@@ -333,8 +334,85 @@ async def get_project_assets(project_id: str, current_user: str = Depends(get_cu
     if not project:
         raise HTTPException(status_code=404, detail="Project not found or access denied")
     
-    # For now, return an empty list (placeholder)
-    return []
+    # Get assets from the assets collection
+    if "assets" not in db.list_collection_names():
+        return []
+    
+    assets_collection = db["assets"]
+    assets = list(assets_collection.find({"project_id": project_id}))
+    
+    if not assets:
+        return []  # Return empty list if no assets found
+    
+    formatted_assets = []
+    for asset in assets:
+        formatted_asset = {
+            "id": str(asset["_id"]),
+            "asset_name": asset.get("name", "Unnamed Asset"),  # Map backend field to frontend expected field
+            "description": asset.get("description", ""),
+            "type": asset.get("type", "general"),
+            "project_id": asset.get("project_id", ""),
+            "created_at": asset.get("created_at", ""),
+            "email": asset.get("email", "")
+        }
+        formatted_assets.append(formatted_asset)
+    
+    return formatted_assets
+
+@app.post("/api/projects/{project_id}/assets", response_model=dict)
+async def create_project_asset(
+    project_id: str, 
+    asset_data: dict,  # Use a dict to accept the frontend data format
+    current_user: str = Depends(get_current_user)
+):
+    # Validate project exists and user has access
+    project = project_collection.find_one({"_id": project_id, "email": current_user})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found or access denied")
+    
+    # Create a new assets collection if it doesn't exist already
+    if "assets" not in db.list_collection_names():
+        db.create_collection("assets")
+    
+    assets_collection = db["assets"]
+    
+    try:
+        # Map frontend fields to backend model
+        asset = Asset(
+            name=asset_data.get("asset_name", "Unnamed Asset"),
+            description=asset_data.get("description", ""),
+            type="general",  # Default type
+            project_id=project_id,
+            created_at=datetime.now()
+        )
+        
+        # Convert to dictionary for MongoDB
+        asset_dict = asset.dict()
+        
+        # Use the asset ID as MongoDB _id
+        asset_dict["_id"] = asset_dict["id"]
+        
+        # Add user ownership
+        asset_dict["email"] = current_user
+        
+        # Insert the asset into the database
+        result = assets_collection.insert_one(asset_dict)
+        
+        if not result.inserted_id:
+            raise HTTPException(status_code=500, detail="Failed to insert asset into database")
+        
+        return {
+            "id": str(result.inserted_id),
+            "asset_name": asset.name,  # Map back to frontend expected field
+            "description": asset.description,
+            "type": asset.type,
+            "project_id": asset.project_id,
+            "created_at": asset.created_at,
+            "email": current_user
+        }
+    except Exception as e:
+        print(f"Error creating asset: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/projects/{project_id}/sensors")
 async def get_project_sensors(project_id: str, current_user: str = Depends(get_current_user)):
