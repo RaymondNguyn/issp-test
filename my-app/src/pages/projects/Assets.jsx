@@ -24,6 +24,46 @@ function Assets({ onLogout }) {
     fetchProjectAndAssets();
   }, [projectId]);
 
+  const deleteAsset = async (assetId, assetName) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete asset "${assetName}"? This cannot be undone.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        onLogout();
+        setError("Session expired. Please login again.");
+        return;
+      }
+
+      const response = await fetch(
+        `http://localhost:8000/api/projects/${projectId}/assets/${assetId}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete asset");
+      }
+
+      await response.json();
+      alert("Asset successfully deleted");
+
+      // Remove the deleted asset from the state
+      setAssets(assets.filter((asset) => asset.id !== assetId));
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   const fetchProjectAndAssets = async () => {
     try {
       setLoading(true);
@@ -287,12 +327,19 @@ function Assets({ onLogout }) {
                 </div>
 
                 {/* View Sensors Button */}
-                <div className="mt-4 flex justify-end">
+                {/* View Sensors and Delete Buttons */}
+                <div className="mt-4 flex justify-end space-x-2">
                   <button
                     onClick={handleViewSensors}
                     className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition duration-200 cursor-pointer"
                   >
                     View Sensors
+                  </button>
+                  <button
+                    onClick={() => deleteAsset(asset.id, asset.asset_name)}
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition duration-200 cursor-pointer"
+                  >
+                    Delete
                   </button>
                 </div>
               </div>

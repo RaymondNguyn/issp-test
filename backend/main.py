@@ -482,3 +482,64 @@ async def delete_project(project_id: str, current_user: str = Depends(get_curren
             status_code=500,
             content={"detail": f"Server error: {str(e)}"}
         )
+    
+@app.delete("/api/projects/{project_id}/assets/{asset_id}", response_model=dict)
+async def delete_asset(
+    project_id: str,
+    asset_id: str,
+    current_user: str = Depends(get_current_user)
+):
+    """Delete a specific asset by ID for the current user."""
+    from fastapi.responses import JSONResponse
+    
+    try:
+        print(f"Attempting to delete asset: {asset_id} from project: {project_id}")
+        print(f"Current user: {current_user}")
+        
+        # Ensure assets collection exists
+        if "assets" not in db.list_collection_names():
+            return JSONResponse(
+                status_code=404,
+                content={"detail": "Assets collection not found"}
+            )
+        
+        assets_collection = db["assets"]
+        
+        # Validate project exists and user has access
+        project = project_collection.find_one({"_id": project_id, "email": current_user})
+        if not project:
+            return JSONResponse(
+                status_code=404,
+                content={"detail": "Project not found or access denied"}
+            )
+        
+        # Check if asset exists and belongs to this project
+        asset = assets_collection.find_one({"_id": asset_id, "project_id": project_id})
+        if not asset:
+            return JSONResponse(
+                status_code=404,
+                content={"detail": "Asset not found or doesn't belong to this project"}
+            )
+        
+        # Delete the asset
+        result = assets_collection.delete_one({"_id": asset_id, "project_id": project_id})
+        
+        if result.deleted_count == 0:
+            return JSONResponse(
+                status_code=404,
+                content={"detail": "Asset not found or already deleted"}
+            )
+            
+        return {
+            "message": "Asset successfully deleted",
+            "deleted_count": result.deleted_count,
+            "asset_id": asset_id
+        }
+    except Exception as e:
+        import traceback
+        print(f"Error deleting asset {asset_id} from project {project_id}:", str(e))
+        print(traceback.format_exc())
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Server error: {str(e)}"}
+        )
