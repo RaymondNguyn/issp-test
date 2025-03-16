@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Sidebar } from "../components/sidenav";
 import { TopNav } from "../components/topnav";
 import { SensorTable } from "../components/SensorTable";
+import Notifications from "../components/Notifications"; // Import Notifications
 
 function Dashboard({ onLogout, token }) {
   const [data, setData] = useState(null);
@@ -20,9 +21,7 @@ function Dashboard({ onLogout, token }) {
   const fetchData = async () => {
     try {
       const response = await fetch("http://localhost:8000/api/user", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (!response.ok) {
         if (response.status === 401) {
@@ -63,43 +62,27 @@ function Dashboard({ onLogout, token }) {
     });
   };
 
-
   if (loading) return <div>Loading...</div>;
 
   return (
     <div className="flex h-screen overflow-auto bg-gray-100">
-      {/* Sidebar - Fixed on the left */}
       <Sidebar isCollapsed={isCollapsed} setIsCollapsed={setIsCollapsed} />
-
-      {/* Main Content Area */}
-      <div className="flex flex-col flex-1 ">
-        {/* Fixed Top Navigation */}
+      <div className="flex flex-col flex-1">
         <TopNav />
+        <Notifications /> {/* Keep Notifications */}
 
-        {/* Content below TopNav */}
-        <div
-          className={`p-6 transition-all ${isCollapsed ? "ml-[52px]" : "ml-0"
-            }`}
-        >
+        <div className={`p-6 transition-all ${isCollapsed ? "ml-[52px]" : "ml-0"}`}>
           <div className="flex justify-between items-center mb-4">
-            {data && (
-              <div>
-                <h1 className="text-2xl font-bold">{data.name}'s Dashboard</h1>
-              </div>
-            )}
-            {/* <button
-              onClick={onLogout}
-              className="bg-red-500 text-white px-4 py-2 rounded"
-            >
-              Logout
-            </button> */}
+            {data && <h1 className="text-2xl font-bold">{data.name}'s Dashboard</h1>}
+          </div>
+
           <div className="bg-gradient-to-r from-blue-500 to-blue-700 text-white p-6 rounded-lg shadow-lg max-w-md mx-auto mb-6 flex items-center justify-between">
             {weather ? (
               weather.error ? (
                 <p className="text-red-300 font-semibold">{weather.error}</p>
               ) : (
                 <div className="flex items-center space-x-4">
-                  <img src={` https://openweathermap.org/img/wn/10d@2x.png`} alt="WeatherIcon" className="w-14 h-14" />
+                  <img src={`https://openweathermap.org/img/wn/10d@2x.png`} alt="WeatherIcon" className="w-14 h-14" />
                   <div>
                     <h2 className="text-xl font-semibold">{weather.location}</h2>
                     <p className="text-lg">{weather.condition}</p>
@@ -112,50 +95,30 @@ function Dashboard({ onLogout, token }) {
             )}
           </div>
 
-          </div>
-          
-          <div>
-
-            <div className="flex-grow flex flex-col md:flex-row justify-center items-center py-24 bg-gray-100 space-y-6 md:space-y-0 md:space-x-12">
-
-              <div className="flex justify-center items-center p-6">
-                <img src="/setu.webp" alt="Setu Logo" className="w-64 h-auto object-contain" />
-              </div>
-
-              <div className="bg-white text-center p-12 rounded-lg shadow-xl max-w-lg w-full border border-gray-300">
-                <h1 className="text-4xl font-bold text-green-500 mb-4">SETU TECHNOLOGIES INC</h1>
-                <p className="text-xl text-gray-800 mb-6">
-                  BUILDING BETTER, SAFER AND GREENER INFRASTRUCTURE
-                </p>
-                <a
-                  href="https://www.setutech.ca"
-                  className="bg-green-600 text-white px-6 py-3 rounded-lg text-lg hover:bg-green-700 transition duration-300"
-                >
-                  www.setutech.ca
-                </a>
-              </div>
+          <div className="flex-grow flex flex-col md:flex-row justify-center items-center py-24 bg-gray-100 space-y-6 md:space-y-0 md:space-x-12">
+            <div className="flex justify-center items-center p-6">
+              <img src="/setu.webp" alt="Setu Logo" className="w-64 h-auto object-contain" />
             </div>
 
-
-
-            <div
-              class="container mx-auto mt-12 px-4 grid grid-cols-1 sm:grid-cols-2 gap-6 justify-center mb-8"
-            >
-              <a
-                href="projects"
-                class="bg-green-600 text-white text-center py-5 px-6 max-w-xs w-full rounded-lg shadow-lg hover:bg-green-700 transition duration-300 text-lg flex justify-center mx-auto"
-              >
-                View Projects
-              </a>
-              <a
-                href="/add-projects"
-                class="bg-green-600 text-white text-center py-5 px-6 max-w-xs w-full rounded-lg shadow-lg hover:bg-green-700 transition duration-300 text-lg flex justify-center mx-auto"
-              >
-                Add Projects
+            <div className="bg-white text-center p-12 rounded-lg shadow-xl max-w-lg w-full border border-gray-300">
+              <h1 className="text-4xl font-bold text-green-500 mb-4">SETU TECHNOLOGIES INC</h1>
+              <p className="text-xl text-gray-800 mb-6">BUILDING BETTER, SAFER AND GREENER INFRASTRUCTURE</p>
+              <a href="https://www.setutech.ca" className="bg-green-600 text-white px-6 py-3 rounded-lg text-lg hover:bg-green-700 transition duration-300">
+                www.setutech.ca
               </a>
             </div>
-            <SensorTable ></SensorTable>
           </div>
+
+          <div className="container mx-auto mt-12 px-4 grid grid-cols-1 sm:grid-cols-2 gap-6 justify-center mb-8">
+            <a href="projects" className="bg-green-600 text-white text-center py-5 px-6 max-w-xs w-full rounded-lg shadow-lg hover:bg-green-700 transition duration-300 text-lg flex justify-center mx-auto">
+              View Projects
+            </a>
+            <a href="/add-projects" className="bg-green-600 text-white text-center py-5 px-6 max-w-xs w-full rounded-lg shadow-lg hover:bg-green-700 transition duration-300 text-lg flex justify-center mx-auto">
+              Add Projects
+            </a>
+          </div>
+
+          <SensorTable />
         </div>
       </div>
     </div>

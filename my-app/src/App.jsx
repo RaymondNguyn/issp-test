@@ -14,6 +14,7 @@ import SensorDetail from "./pages/SensorDetail";
 import Projects from "./pages/projects/Projects";
 import AddProject from "./pages/projects/Add-project"; // Import AddProject page
 import ProjectDetail from "./pages/projects/ProjectDetail"; // Import ProjectDetail page
+import Settings from "./pages/Settings"; // Import Settings page
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token"));
@@ -94,6 +95,16 @@ function App() {
           element={
             <ProtectedRoute token={token}>
               <ProjectDetail token={token} />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Settings page */}
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute token={token}>
+              <Settings token={token} />
             </ProtectedRoute>
           }
         />

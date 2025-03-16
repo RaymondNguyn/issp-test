@@ -1,21 +1,30 @@
 # main.py
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from pymongo import MongoClient, DESCENDING
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from sensor_model import *
 from project_model import *
 from typing import List, Optional
-from datetime import timedelta
+from datetime import timedelta, datetime
 from auth import (
     get_password_hash,
     verify_password,
     create_access_token,
     get_current_user,
 )
+from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
+import asyncio
+import json
+from sse import router as sse_router
+from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
+from enum import Enum
 
 app = FastAPI()
+
+app.include_router(sse_router)
 
 # Configure CORS
 app.add_middleware(
@@ -26,29 +35,40 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 # Models
+class NotificationFrequency(str, Enum):
+    INSTANT = "instant"
+    HOURLY = "hourly"
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    OFF = "off"
+
+class NotificationPreferences(BaseModel):
+    email: EmailStr
+    frequency: NotificationFrequency = NotificationFrequency.INSTANT
+    enabled: bool = True
+    notify_on_status_change: bool = True
+    notify_on_temperature_threshold: bool = True
+    temperature_threshold: float = 30.0
+
 class UserCreate(BaseModel):
     name: str
     email: str
     password: str
     sensors: Optional[List[str]] = []
     projects: Optional[List[str]] = []
-
-
-class Sensor(BaseModel):
-    sensorName: str
-
+    notification_preferences: Optional[NotificationPreferences] = None
 
 class User(BaseModel):
     email: str
     name: str
 
-
 class Token(BaseModel):
     access_token: str
     token_type: str
 
+class Sensor(BaseModel):
+    sensorName: str
 
 # MongoDB
 client = MongoClient("mongodb://localhost:27017/")
@@ -57,10 +77,22 @@ users_collection = db["users"]
 sensor_collection = db["sensor_data"]
 project_collection = db["projects"]
 
-
 def user_helper(user) -> dict:
     return {"id": str(user["_id"]), "email": user["email"], "name": user["name"]}
 
+# Email configuration
+email_conf = ConnectionConfig(
+    MAIL_USERNAME="your-email@gmail.com",
+    MAIL_PASSWORD="your-app-password",
+    MAIL_FROM="your-email@gmail.com",
+    MAIL_PORT=587,
+    MAIL_SERVER="smtp.gmail.com",
+    MAIL_STARTTLS=True,
+    MAIL_SSL_TLS=False,
+    USE_CREDENTIALS=True
+)
+
+fastmail = FastMail(email_conf)
 
 @app.post("/api/register", response_model=User)
 async def register(user: UserCreate):
@@ -76,7 +108,6 @@ async def register(user: UserCreate):
     result = users_collection.insert_one(user_dict)
 
     return {"id": str(result.inserted_id), "email": user.email, "name": user.name}
-
 
 @app.post("/token", response_model=Token)
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
@@ -95,7 +126,6 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
     return {"access_token": access_token, "token_type": "bearer"}
 
-
 @app.get("/api/user", response_model=User)
 async def get_user_name(current_user: str = Depends(get_current_user)):
     user_info = users_collection.find_one({"email": current_user})
@@ -108,7 +138,6 @@ async def get_user_name(current_user: str = Depends(get_current_user)):
     }
     print("response", response)
     return response
-
 
 @app.post("/api/user/add-sensor")
 async def add_user_sensor(
@@ -129,7 +158,6 @@ async def add_user_sensor(
 
     return {"message": "Sensor added successfully", "sensor": sensor.sensorName}
 
-
 @app.get("/api/displaySensor", response_model=List[str])
 async def display_user_sensors(current_user: str = Depends(get_current_user)):
     user = users_collection.find_one({"email": current_user})
@@ -139,14 +167,86 @@ async def display_user_sensors(current_user: str = Depends(get_current_user)):
 
     return user.get("sensors", [])
 
+@app.put("/api/user/notification-preferences")
+async def update_notification_preferences(
+    preferences: NotificationPreferences,
+    current_user: str = Depends(get_current_user)
+):
+    result = users_collection.update_one(
+        {"email": current_user},
+        {"$set": {"notification_preferences": preferences.dict()}}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {"message": "Notification preferences updated successfully"}
 
-## To be removed or integrated with sensors
+@app.get("/api/user/notification-preferences", response_model=NotificationPreferences)
+async def get_notification_preferences(current_user: str = Depends(get_current_user)):
+    user = users_collection.find_one({"email": current_user})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    preferences = user.get("notification_preferences")
+    if not preferences:
+        # Return default preferences if none set
+        return NotificationPreferences(email=current_user)
+    
+    return NotificationPreferences(**preferences)
+
+async def send_email_notification(background_tasks: BackgroundTasks, to_email: str, subject: str, message: str):
+    message = MessageSchema(
+        subject=subject,
+        recipients=[to_email],
+        body=message,
+        subtype="html"
+    )
+    
+    background_tasks.add_task(fastmail.send_message, message)
+
 @app.post("/api/receive-sensor-data")
-async def receive_sensor_data(sensor_data: SensorData):
+async def receive_sensor_data(
+    sensor_data: SensorData,
+    background_tasks: BackgroundTasks
+):
     data_dict = sensor_data.dict()
     sensor_collection.insert_one(data_dict)
+    
+    # Find users who have this sensor
+    users = users_collection.find({"sensors": sensor_data.sensor_id})
+    
+    for user in users:
+        prefs = user.get("notification_preferences")
+        if not prefs or not prefs.get("enabled", True):
+            continue
+            
+        frequency = prefs.get("frequency", "instant")
+        if frequency == NotificationFrequency.OFF:
+            continue
+            
+        # Check notification conditions
+        should_notify = False
+        notification_message = ""
+        
+        if prefs.get("notify_on_status_change", True) and sensor_data.status != "normal":
+            should_notify = True
+            notification_message += f"Status Alert: Sensor {sensor_data.sensor_id} status is {sensor_data.status}. "
+            
+        if (prefs.get("notify_on_temperature_threshold", True) and 
+            sensor_data.temperature > prefs.get("temperature_threshold", 30.0)):
+            should_notify = True
+            notification_message += f"Temperature Alert: {sensor_data.temperature}°C exceeds threshold. "
+        
+        if should_notify and frequency == NotificationFrequency.INSTANT:
+            await send_email_notification(
+                background_tasks,
+                user["email"],
+                f"Sensor Alert - {sensor_data.sensor_id}",
+                notification_message
+            )
+    
     return {"message": "Data received successfully"}
-
 
 @app.get("/api/sensors/{sensor_id}")
 async def get_sensor_details(
@@ -162,7 +262,6 @@ async def get_sensor_details(
 
     print(sensor_data)
     return sensor_data
-
 
 @app.get("/api/user/display-sensor-dash")
 async def get_latest_sensors(current_user: str = Depends(get_current_user)):
@@ -249,3 +348,86 @@ async def create_project(project: Project, current_user: str = Depends(get_curre
         "sensors": project.sensors,
         "created_at": project.created_at,
     }
+
+def create_notification(sensor_id: str, message: str):
+    notification_data = {
+        "sensor_id": sensor_id,
+        "message": message,
+        "timestamp": datetime.now()
+    }
+    # Insert the notification into MongoDB
+    notifications_collection = db["notifications"]
+    notifications_collection.insert_one(notification_data)
+
+@app.get("/api/notifications")
+async def get_notifications(current_user: str = Depends(get_current_user)):
+    notifications_collection = db["notifications"]
+    notifications = list(notifications_collection.find({"email": current_user}))
+    if not notifications:
+        raise HTTPException(status_code=404, detail="No notifications found")
+
+    # Format notification data
+    formatted_notifications = []
+    for notification in notifications:
+        formatted_notifications.append({
+            "sensor_id": notification.get("sensor_id"),
+            "message": notification.get("message"),
+            "timestamp": notification.get("timestamp")
+        })
+    
+    return formatted_notifications
+
+# SSE Notifications Endpoint
+async def event_stream():
+    while True:
+        await asyncio.sleep(5)  # Simulating a new notification every 5 seconds
+        data = json.dumps({
+            "message": "New sensor alert! High temperature detected.",
+            "url": "/sensors/123"
+        })
+        yield f"data: {data}\n\n"
+
+@app.get("/sse/notifications")
+async def sse_notifications():
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+# Scheduled task to handle non-instant notifications
+async def process_scheduled_notifications():
+    while True:
+        current_time = datetime.utcnow()
+        
+        # Find users with non-instant notification preferences
+        users = users_collection.find({
+            "notification_preferences.enabled": True,
+            "notification_preferences.frequency": {"$ne": "instant"}
+        })
+        
+        for user in users:
+            prefs = user.get("notification_preferences", {})
+            frequency = prefs.get("frequency")
+            
+            # Calculate time window based on frequency
+            if frequency == NotificationFrequency.HOURLY:
+                time_window = timedelta(hours=1)
+            elif frequency == NotificationFrequency.DAILY:
+                time_window = timedelta(days=1)
+            elif frequency == NotificationFrequency.WEEKLY:
+                time_window = timedelta(weeks=1)
+            else:
+                continue
+                
+            # Get sensor data within time window
+            sensor_data = sensor_collection.find({
+                "sensor_id": {"$in": user.get("sensors", [])},
+                "timestamp": {"$gte": current_time - time_window}
+            })
+            
+            # Process and send digest email
+            # Implementation details here...
+        
+        # Sleep until next check
+        await asyncio.sleep(60 * 15)  # Check every 15 minutes
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(process_scheduled_notifications())
