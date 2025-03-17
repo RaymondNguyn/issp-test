@@ -29,6 +29,7 @@ function SensorDetail({ token }) {
       }
 
       const data = await response.json();
+      console.log(data)
       setSensorData(data);
       console.log("Fetched sensor data:", data);
       setLoading(false);
@@ -114,7 +115,9 @@ function SensorDetail({ token }) {
 
         
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold">Sensor Details: {sensorData[0].sensor_id}</h1>
+        <h1 className="text-2xl font-bold">
+            Sensor Details: {sensorData.length > 0 ? sensorData[0]?.sensor_id : "No Data"}
+          </h1>
           <button
             onClick={downloadSensorData}
             className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Sidebar } from "../components/sidenav";
 import { TopNav } from "../components/topnav";
 
@@ -10,14 +10,20 @@ function DisplaySensor({ token }) {
   const [sensorName, setSensorName] = useState("");  
   const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
+  const { assetId, projectId } = useParams(); // Get assetId from the URL params
 
   useEffect(() => {
-    fetchSensors();
-  }, []);
+    if (assetId) {
+      fetchSensors(assetId);
+    } else {
+      setError("No asset ID provided.");
+      setLoading(false);
+    }
+  }, [assetId]);
 
-  const fetchSensors = async () => {
+  const fetchSensors = async (assetId) => {
     try {
-      const response = await fetch('http://localhost:8000/api/sensors', {
+      const response = await fetch(`http://localhost:8000/api/sensors/${assetId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -33,33 +39,43 @@ function DisplaySensor({ token }) {
       }
 
       const sensorData = await response.json();
+      console.log(sensorData)
       setSensors(sensorData);
       setLoading(false);
     } catch (err) {
       setError(err.message);
       setLoading(false);
     }
+
   };
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:8000/api/user/add-sensor', {
+      const response = await fetch('http://localhost:8000/api/add-sensors', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({ sensorName }),
+        body: JSON.stringify({
+          sensorName,
+          assetId,
+          projectId
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to add sensor');
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to add sensor');
       }
 
+      const data = await response.json();
       alert("Sensor added successfully");
       setSensorName(""); 
-      fetchSensors();
+      fetchSensors(assetId);
+      console.log(data);
     } catch (err) {
       setError(err.message);
     }
@@ -102,7 +118,7 @@ function DisplaySensor({ token }) {
               {sensors.map((sensor) => (
                 <button
                   key={sensor.sensor_id}
-                  onClick={() => navigate(`/sensors/${sensor.sensor_id}`)}
+                  onClick={() => navigate(`/projects/${projectId}/assets/${assetId}/sensors/${sensor.sensor_id}`)}
                   className="bg-white p-4 rounded-lg shadow hover:shadow-md transition-shadow w-full text-left cursor-pointer"
                 >
                   <div className="flex items-center space-x-2">

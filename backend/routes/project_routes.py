@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends
 from services.sensor_service import process_sensor_data
 from models.sensor_model import BaseSensorData, SensorDefinition
-from models. project_model import ProjectInDB
-from database import sensor_data_collection, sensors_collection, users_collection, projects_collection
+from models.project_model import ProjectInDB
+from models.assets_model import BaseAssetData, AssetDefinition
+from database import sensor_data_collection, sensors_collection, users_collection, projects_collection, assets_collection
 from datetime import datetime
 import uuid
 from datetime import datetime
@@ -35,6 +36,7 @@ async def register_project(
         "name": name,
         "description": description,
         "owner_id": current_user,
+        "date": project.get("date"),
         "sensor_ids": []
     }
 
@@ -62,85 +64,82 @@ async def list_projects(current_user: str = Depends(get_current_user)):
 
     return projects
 
-@router.get("/api/projects/{project_id}", response_model=List[ProjectInDB])
-async def list_projects_details(
+@router.get("/api/projects/{project_id}/assets", response_model=List[AssetDefinition])
+async def list_project_assets(
     project_id: str,
     limit: int = 100,
     current_user: str = Depends(get_current_user)
 ):
-    
-    project = projects_collection.find_one({"project_id": project_id,
-                                             "owner_id": current_user})
+    # Find the project to verify access
+    project = projects_collection.find_one({"project_id": project_id, "owner_id": current_user})
     
     if not project:
-        raise HTTPException(status_code=404, detail="Sensor not found or you don't have access")
+        raise HTTPException(status_code=404, detail="Project not found or access denied")
 
-
+    # Query assets that belong to this project
     query = {"project_id": project_id}
-    results = list(projects_collection.find(
-        query, 
-        sort=[("timestamp", -1)],
-        limit=limit
-    ))
+    assets = list(assets_collection.find(query).sort("timestamp").limit(limit))
+
+    # Convert MongoDB ObjectIds to strings
+    for asset in assets:
+        asset["_id"] = str(asset["_id"])
     
-    # Format results
-    formatted_results = []
-    for result in results:
-        result["_id"] = str(result["_id"])
-        formatted_results.append(result)
-    print(formatted_results)
-    return formatted_results
+    print(assets)
+    return assets
 
 ## Add sensor to project
-@router.post("/api/projects/{project_id}/add-sensor", response_model=SensorDefinition)
-async def add_sensor_to_project(
-    project_id: str,  # Project ID parameter
-    sensor: Dict[str, Any],  # Sensor data (in the body of the request)
-    current_user: str = Depends(get_current_user)  # Get the current authenticated user
+@router.post("/api/projects/{project_id}/add-assets", response_model=AssetDefinition)
+async def add_asset_to_project(
+    project_id: str,  
+    asset_data: Dict[str, Any], 
+    current_user: str = Depends(get_current_user)  
 ):
-    name = sensor.get("name")
-    if not name:
-        raise HTTPException(status_code=400, detail="Sensor name is required")
-    
-    # Generate a unique sensor UUID
-    sensor_uuid = str(uuid.uuid4())
-    
-    # Create the sensor definition
-    sensor_definition = SensorDefinition(
-        sensor_id=sensor_uuid,
-        name=name,
-        owner_id=current_user,
-        project_ids=[]  # Initialize project_ids as an empty list
-    )
-    
-    # Save the sensor to the sensors collection
-    document_dict = sensor_definition.dict(by_alias=True, exclude_none=True)
-    result = sensors_collection.insert_one(document_dict)
-    
-    created_sensor = sensor_definition.dict()
-    created_sensor["_id"] = str(result.inserted_id)
+    name = asset_data.get("asset_name")  # Ensure correct field extraction
+    description = asset_data.get("description")
+    date = asset_data.get("date", None)
 
-    # Add the sensor UUID to the project's sensor_ids
+    if not name:
+        raise HTTPException(status_code=400, detail="Asset name is required")
+    
+    # Generate a unique asset UUID
+    asset_uuid = str(uuid.uuid4())
+    
+    # Create the asset definition
+    asset_definition = AssetDefinition(
+        asset_id=asset_uuid,
+        name=name,
+        description=description,
+        date=date,
+        owner_id=current_user,
+        project_id=project_id,
+        sensor_ids=[]
+    )
+
+    # Convert to dictionary and explicitly add project_id
+    document_dict = asset_definition.dict(by_alias=True, exclude_none=True)
+    document_dict["project_id"] = project_id  # Ensure this field is included
+    
+    # Save to assets collection
+    result = assets_collection.insert_one(document_dict)
+    
+    created_asset = asset_definition.dict()
+    created_asset["_id"] = str(result.inserted_id)
+
+    # Add asset to the project's asset_ids
     project = projects_collection.find_one({"project_id": project_id})
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
 
-    # Update the project with the new sensor ID
     projects_collection.update_one(
         {"project_id": project_id},
-        {"$push": {"sensor_ids": sensor_uuid}}  # Add the sensor UUID to the project's sensor_ids array
-    )
-
-    # Add the project_id to the sensor's project_ids array
-    sensors_collection.update_one(
-        {"sensor_id": sensor_uuid},
-        {"$push": {"project_ids": project_id}} 
+        {"$push": {"asset_ids": asset_uuid}}
     )
     
-    # Optionally, associate the sensor with the current user if needed
+    # Associate asset with the current user
     users_collection.update_one(
         {"email": current_user},
-        {"$push": {"sensors": sensor_uuid}}  # Add the sensor to the user's sensors array
+        {"$push": {"assets": asset_uuid}}
     )
     
-    return SensorDefinition(**created_sensor)
+    return AssetDefinition(**created_asset)
+

@@ -14,6 +14,7 @@ import SensorDetail from "./pages/SensorDetail";
 import Projects from "./pages/projects/Projects";
 import AddProject from "./pages/projects/Add-project"; // Import AddProject page
 import ProjectDetail from "./pages/projects/ProjectDetail"; // Import ProjectDetail page
+import Assets from "./pages/projects/Assets";
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token"));
@@ -66,9 +67,28 @@ function App() {
         />
 
         <Route
-          path="/sensors/:sensorId"
+          path="/projects/:projectId/assets/:assetId/sensors/:sensorId"
           element={<SensorDetail token={token} />}
         />
+
+        <Route
+            path="/projects/:projectId/assets/:assetId/sensors"
+            element={
+              <ProtectedRoute token={token}>
+                <DisplaySensor token={token} />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Route for a specific sensor */}
+          <Route
+            path="/projects/:projectId/assets/:assetId/sensors/:sensorId"
+            element={
+              <ProtectedRoute token={token}>
+                <SensorDetail token={token} />
+              </ProtectedRoute>
+            }
+          />
 
         <Route
           path="/projects"
@@ -97,11 +117,15 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/"
           element={<Navigate to={token ? "/dashboard" : "/login"} replace />}
         />
+         <Route
+        path="/projects/:projectId/assets"
+        element={<Assets onLogout={handleLogout} />}
+      />
+        
       </Routes>
     </Router>
   );

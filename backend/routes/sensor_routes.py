@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from services.sensor_service import process_sensor_data, classify_alert
 from models.sensor_model import BaseSensorData, SensorDefinition
-from database import sensor_data_collection, sensors_collection, users_collection
+from database import sensor_data_collection, sensors_collection, users_collection, assets_collection, projects_collection
 from datetime import datetime
 import uuid
 from datetime import datetime
@@ -54,7 +54,9 @@ async def register_sensor(
     sensor: Dict[str, Any], 
     current_user: str = Depends(get_current_user)
 ):
-    name = sensor.get("name")
+    name = sensor.get("sensorName")
+    asset_id = sensor.get("assetId")
+    project_id = sensor.get("projectId")
     if not name:
         raise HTTPException(status_code=400, detail="Sensor name is required")
     
@@ -64,6 +66,8 @@ async def register_sensor(
         sensor_id=str(sensor_uuid),
         name=name,
         owner_id=current_user,
+        asset_ids=asset_id,
+        project_ids=project_id
     )
     
     document_dict = sensor_definition.dict(by_alias=True, exclude_none=True)
@@ -78,6 +82,17 @@ async def register_sensor(
         {"$push": {"sensors": sensor_uuid}}
     )
     
+    projects_collection.update_one(
+        {"project_id": project_id},
+        {"$push": {"sensors": sensor_uuid}}
+    )
+
+    # Update the asset document to include the sensor
+    assets_collection.update_one(
+        {"asset_id": asset_id},
+        {"$push": {"sensors": sensor_uuid}}
+    )
+    
     return SensorDefinition(**created_sensor)
 
 ## Get sensors to display
@@ -87,12 +102,12 @@ async def get_sensor_data(
     limit: int = 100,
     current_user: str = Depends(get_current_user)
 ):
-
+    print(sensor_id)
     sensor = sensors_collection.find_one({
         "sensor_id": sensor_id,
         "owner_id": current_user
     })
-    
+    print(f"Sensor found: {sensor}")
     if not sensor:
         raise HTTPException(status_code=404, detail="Sensor not found or you don't have access")
     
@@ -112,13 +127,37 @@ async def get_sensor_data(
     print(formatted_results)
     return formatted_results
 
-@router.get("/api/sensors", response_model=List[SensorDefinition])
-async def list_sensors(current_user: str = Depends(get_current_user)):
-    sensors = list(sensors_collection.find({"owner_id": current_user}))
-    print(sensors)
+@router.get("/api/sensors/{asset_id}")
+async def display_sensors(
+    asset_id: str,
+    limit: int = 100,
+    current_user: str = Depends(get_current_user)
+):
+    """Fetch sensors based on asset_id while ensuring user has access."""
+
+    asset = assets_collection.find_one({
+        "asset_id": asset_id,
+        "owner_id": current_user
+    })
+
+    if not asset:
+        raise HTTPException(status_code=403, detail="Asset not found or you don't have access")
+
+    project = projects_collection.find_one({
+        "project_id": asset["project_id"],
+        "owner_id": current_user
+    })
+
+    if not project:
+        raise HTTPException(status_code=403, detail="This asset does not belong to a project you own")
+
+    sensors = list(sensors_collection.find({"asset_ids": asset_id}))
+
+    if not sensors:
+        return []  # Fail-safe: Return empty list instead of an error
+
+    # Convert MongoDB ObjectIds to strings
     for sensor in sensors:
-        if sensor["_id"] is not None:
-            sensor["_id"] = str(sensor["_id"])
-        else:
-            sensor["_id"] = None
+        sensor["_id"] = str(sensor["_id"])
+
     return sensors
