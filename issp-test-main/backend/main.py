@@ -104,7 +104,8 @@ def send_reset_email(email: str, token: str):
     """
 
     msg = MIMEMultipart()
-    msg["From"] = EMAIL_SENDER
+    msg["From"] = "SETU Technologies <no-reply@yourapp.com>"
+    msg["Reply-To"] = "support@yourapp.com"
     msg["To"] = email
     msg["Subject"] = subject
     msg.attach(MIMEText(body, "plain"))
