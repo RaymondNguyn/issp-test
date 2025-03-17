@@ -1,6 +1,6 @@
 from typing import Dict, Any
 from models.sensor_model import BaseSensorData
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict, Any
 import statistics
 
@@ -58,30 +58,25 @@ def classify_alert(sensor_data: Dict[str, Any], history: List[Dict[str, Any]]) -
 
 
 def process_sensor_data(data: Dict[str, Any]) -> BaseSensorData:
-    # Required fields
     if "sensor_id" not in data:
         raise ValueError("sensor_id is required")
     
-    # Create base sensor data
     sensor_data = BaseSensorData(
         sensor_id=data.pop("sensor_id"),
-        timestamp=data.pop("timestamp", datetime.now()),
+        timestamp=data.pop("timestamp", datetime.now(timezone.utc)),
         status=data.pop("status", "active"),
         readings={}
     )
-    
-    # Process common scalar readings
+
     scalar_fields = ["adc", "temperature", "roll", "pitch", "position"]
     for field in scalar_fields:
         if field in data:
             sensor_data.readings[field] = data.pop(field)
-    
-    # Process vector readings
+
     vector_fields = ["accelerometer", "magnetometer", "gyroscope"]
     for field in vector_fields:
         if field in data:
             vector_data = data.pop(field)
-            # Handle vector data in various formats
             if isinstance(vector_data, dict):
                 sensor_data.readings[field] = {
                     "x": vector_data.get("x"),
@@ -94,9 +89,8 @@ def process_sensor_data(data: Dict[str, Any]) -> BaseSensorData:
                     "y": vector_data[1],
                     "z": vector_data[2]
                 }
-    
-    # Add any remaining fields to readings
+
     for key, value in data.items():
         sensor_data.readings[key] = value
-    
+
     return sensor_data

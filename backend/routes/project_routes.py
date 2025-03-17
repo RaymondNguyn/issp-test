@@ -1,7 +1,34 @@
+from fastapi import APIRouter, Depends, HTTPException
+from typing import List, Dict, Any
+
+router = APIRouter(prefix="/projects", tags=["projects"])
+
+@router.get("")
+async def get_projects():
+    # Mock data for testing
+    return {
+        "projects": [
+            {
+                "id": "project1",
+                "name": "Test Project",
+                "description": "A test project"
+            }
+        ]
+    }
+
+@router.post("")
+async def create_project(project: Dict[str, Any]):
+    # Mock implementation
+    return {
+        "id": "new_project",
+        "name": project["name"],
+        "description": project["description"]
+    }
+
 from fastapi import APIRouter, HTTPException, Depends
 from services.sensor_service import process_sensor_data
 from models.sensor_model import BaseSensorData, SensorDefinition
-from models. project_model import ProjectInDB
+from models.project_model import ProjectInDB
 from database import sensor_data_collection, sensors_collection, users_collection, projects_collection
 from datetime import datetime
 import uuid

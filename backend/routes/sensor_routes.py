@@ -13,7 +13,28 @@ from services.auth_service import (
 )
 from typing import Dict, Any, List
 
-router = APIRouter()
+router = APIRouter(prefix="/sensors", tags=["sensors"])
+
+@router.post("/reading")
+async def submit_reading(data: Dict[str, Any]):
+    try:
+        sensor_data = process_sensor_data(data)
+        return {"status": "success", "data": sensor_data}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/data")
+async def get_sensor_data():
+    # Mock data for testing
+    return {
+        "sensors": [
+            {
+                "id": "sensor1",
+                "temperature": 25.5,
+                "accelerometer": {"x": 0.1, "y": 0.2, "z": 0.3}
+            }
+        ]
+    }
 
 @router.post("/api/receive-sensor-data")
 async def receive_sensor_data(data: Dict[str, Any]):
