@@ -5,6 +5,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
+from database import users_collection
 
 # Configure password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -46,3 +47,22 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     except JWTError:
         raise credentials_exception
     return username
+
+async def get_approved_user(current_user: str = Depends(get_current_user)):
+    if not current_user.isApproved:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account not approved yet"
+        )
+    return current_user
+
+async def get_admin_user(current_user: str = Depends(get_current_user)):
+    user_info = users_collection.find_one({"email": current_user})
+    
+    if not user_info or not user_info.get("isAdmin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required"
+        )
+    
+    return current_user

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Sidebar } from "../components/sidenav";
 import { TopNav } from "../components/topnav";
 
-function DisplaySensor({ token }) {
+function DisplaySensor({ auth }) {
   const [sensors, setSensors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -27,7 +27,7 @@ function DisplaySensor({ token }) {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${auth.token}`,
         }
       });
 
@@ -57,7 +57,7 @@ function DisplaySensor({ token }) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${auth.token}`,
         },
         body: JSON.stringify({
           sensorName,

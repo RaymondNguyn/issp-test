@@ -5,7 +5,7 @@ import { TopNav } from "../components/topnav";
 import { SensorChart } from "../components/Graph";
 import { SensorDataTable } from "../components/Table"; 
 
-function SensorDetail({ token }) {
+function SensorDetail({ auth }) {
   const { sensorId } = useParams(); // Get sensorId from URL
   const [sensorData, setSensorData] = useState([]); // Now an array
   const [loading, setLoading] = useState(true);
@@ -20,7 +20,7 @@ function SensorDetail({ token }) {
     try {
       const response = await fetch(`http://localhost:8000/api/sensor-data/${sensorId}`, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${auth.token}`,
         },
       });
 

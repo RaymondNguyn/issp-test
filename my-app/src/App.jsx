@@ -1,5 +1,5 @@
 import {
-  BrowserRouter as Router,
+  BrowserRouter,
   Routes,
   Route,
   Navigate,
@@ -8,126 +8,132 @@ import { useState, useEffect } from "react";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Register from "./pages/Register";
+// Authorize Routes
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from './components/AdminRoute';
+import ApprovedUserRoutes from './components/ApprovedUserRoutes';
+// Pages
 import DisplaySensor from "./pages/Display-sensor";
 import SensorDetail from "./pages/SensorDetail";
 import Projects from "./pages/projects/Projects";
 import AddProject from "./pages/projects/Add-project"; // Import AddProject page
 import ProjectDetail from "./pages/projects/ProjectDetail"; // Import ProjectDetail page
 import Assets from "./pages/projects/Assets";
+import PendingApproval from "./pages/PendingApproval";
+import AdminPage from "./pages/AdminPage";
 
 function App() {
-  const [token, setToken] = useState(localStorage.getItem("token"));
+  const [auth, setAuth] = useState({
+    token: localStorage.getItem("token"),
+    isAdmin: JSON.parse(localStorage.getItem("isAdmin") || "false"),
+    isApproved: JSON.parse(localStorage.getItem("isApproved") || "false")
+  });
 
-  const handleLogin = (newToken) => {
-    setToken(newToken);
-    localStorage.setItem("token", newToken);
+  const handleLogin = (userData) => {
+    localStorage.setItem("token", userData.token);
+    localStorage.setItem("isAdmin", JSON.stringify(userData.isAdmin));
+    localStorage.setItem("isApproved", JSON.stringify(userData.isApproved));
+    
+    setAuth({
+      token: userData.token,
+      isAdmin: userData.isAdmin,
+      isApproved: userData.isApproved
+    });
   };
 
   const handleLogout = () => {
-    setToken(null);
     localStorage.removeItem("token");
+    localStorage.removeItem("isAdmin");
+    localStorage.removeItem("isApproved");
+    
+    setAuth({ token: null, isAdmin: false, isApproved: false });
   };
 
   return (
-    <Router>
+    <BrowserRouter>
       <Routes>
-        {/* If user is logged in, redirect from login to dashboard */}
+        {/* Public Routes */}
         <Route
-          path="/login"
-          element={
-            token ? (
-              <Navigate to="/dashboard" replace />
-            ) : (
-              <Login onLogin={handleLogin} />
-            )
-          }
-        />
+        path="/login"
+        element={
+          auth.token ? (
+            auth.isApproved ? <Navigate to="/dashboard" replace /> : <Navigate to="/pending-approval" replace />
+          ) : (
+            <Login onLogin={handleLogin} />
+          )
+        }
+      />
 
-        {/* If user is logged in, show the dashboard */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute token={token}>
-              <Dashboard onLogout={handleLogout} token={token} />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Register page */}
         <Route path="/register" element={<Register />} />
+        <Route path="/pending-approval" element={<PendingApproval onLogout={handleLogout} />} />
 
-        <Route
-          path="/sensors"
-          element={
-            <ProtectedRoute token={token}>
-              <DisplaySensor token={token} />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/projects/:projectId/assets/:assetId/sensors/:sensorId"
-          element={<SensorDetail token={token} />}
-        />
-
-        <Route
-            path="/projects/:projectId/assets/:assetId/sensors"
-            element={
-              <ProtectedRoute token={token}>
-                <DisplaySensor token={token} />
-              </ProtectedRoute>
-            }
+        {/* Protected Routes - Basic Authentication */}
+        <Route element={<ProtectedRoute auth={auth} />}>
+          {/* Dashboard is accessible to all authenticated users */}
+          <Route 
+            path="/dashboard" 
+            element={<Dashboard onLogout={handleLogout} auth={auth} />} 
           />
 
-          {/* Route for a specific sensor */}
-          <Route
-            path="/projects/:projectId/assets/:assetId/sensors/:sensorId"
-            element={
-              <ProtectedRoute token={token}>
-                <SensorDetail token={token} />
-              </ProtectedRoute>
-            }
-          />
+          {/* Routes requiring approved status */}
+          <Route element={<ApprovedUserRoutes auth={auth} />}>
+            {/* Sensor routes */}
+            <Route path="/sensors" element={<DisplaySensor auth={auth} />} />
+            <Route 
+              path="/projects/:projectId/assets/:assetId/sensors" 
+              element={<DisplaySensor auth={auth} />} 
+            />
+            <Route 
+              path="/projects/:projectId/assets/:assetId/sensors/:sensorId" 
+              element={<SensorDetail auth={auth} />} 
+            />
+            
+            {/* Project routes for all approved users */}
+            <Route path="/projects">
+              <Route index element={<Projects auth={auth} />} />
+              <Route path=":projectId" element={<ProjectDetail auth={auth} />} />
+            </Route>
+            <Route path="/add-projects" element={<AddProject auth={auth} />} />
+            <Route path="/projects/:projectId/assets" element={<Assets onLogout={handleLogout} auth={auth} />} />
+          </Route>
 
-        <Route
-          path="/projects"
-          element={
-            <ProtectedRoute token={token}>
-              <Projects token={token} />
-            </ProtectedRoute>
-          }
-        />
+          {/* Admin-only routes */}
 
-        <Route
-          path="/add-projects"
-          element={
-            <ProtectedRoute token={token}>
-              <AddProject token={token} />
-            </ProtectedRoute>
-          }
-        />
 
-        {/* Project Detail page (where sensors can be added) */}
-        <Route
-          path="/projects/:projectId"
-          element={
-            <ProtectedRoute token={token}>
-              <ProjectDetail token={token} />
-            </ProtectedRoute>
-          }
-        />
+          <Route element={<AdminRoute auth={auth} />}>
+            <Route path="/admin" element={<AdminPage auth={auth} />} />
+          </Route>
+        </Route>
+
+        {/* Root and fallback routes */}
         <Route
           path="/"
-          element={<Navigate to={token ? "/dashboard" : "/login"} replace />}
+          element={
+            <Navigate 
+              to={
+                auth.token 
+                  ? (auth.isApproved ? "/dashboard" : "/pending-approval") 
+                  : "/login"
+              } 
+              replace 
+            />
+          }
         />
-         <Route
-        path="/projects/:projectId/assets"
-        element={<Assets onLogout={handleLogout} />}
-      />
-        
+        <Route
+          path="*"
+          element={
+            <Navigate 
+              to={
+                auth.token 
+                  ? (auth.isApproved ? "/dashboard" : "/pending-approval") 
+                  : "/login"
+              } 
+              replace 
+            />
+          }
+        />
       </Routes>
-    </Router>
+    </BrowserRouter>
   );
 }
 

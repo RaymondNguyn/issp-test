@@ -4,7 +4,7 @@ import { Sidebar } from "../components/sidenav";
 import { TopNav } from "../components/topnav";
 import { SensorTable } from "../components/SensorTable";
 
-function Dashboard({ onLogout, token }) {
+function Dashboard({ onLogout, auth }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -21,7 +21,7 @@ function Dashboard({ onLogout, token }) {
     try {
       const response = await fetch("http://localhost:8000/api/user", {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${auth.token}`,
         },
       });
       if (!response.ok) {
@@ -73,7 +73,7 @@ function Dashboard({ onLogout, token }) {
       {/* Main Content Area */}
       <div className="flex flex-col flex-1 ">
         {/* Fixed Top Navigation */}
-        <TopNav />
+        <TopNav onLogout={onLogout} token={auth.token} userData={data} />
 
         {/* Content below TopNav */}
         <div
@@ -86,12 +86,6 @@ function Dashboard({ onLogout, token }) {
                 <h1 className="text-2xl font-bold">{data.name}'s Dashboard</h1>
               </div>
             )}
-            {/* <button
-              onClick={onLogout}
-              className="bg-red-500 text-white px-4 py-2 rounded"
-            >
-              Logout
-            </button> */}
 
 
           </div>

@@ -22,13 +22,21 @@ async def register(user: UserCreate):
     hashed_password = get_password_hash(user.password)
     user_dict = user.dict()
     user_dict["password"] = hashed_password
+    
+    ## temp
+    user_dict["isAdmin"] = False  # Override the default value
+    user_dict["isApproved"] = False  # Override the default value
 
     result = users_collection.insert_one(user_dict)
 
-    return {"id": str(result.inserted_id), "email": user.email, "name": user.name}
+    return {"id": str(result.inserted_id),
+            "email": user.email,
+            "name": user.name,
+            "isAdmin": user_dict["isAdmin"],
+            "isApproved": user_dict["isApproved"]}
 
 
-@router.post("/token", response_model=Token)
+@router.post("/token", response_model=TokenWithUserInfo)
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     user = users_collection.find_one({"email": form_data.username})
     if not user or not verify_password(form_data.password, user["password"]):
@@ -42,5 +50,11 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     access_token = create_access_token(
         data={"sub": form_data.username}, expires_delta=access_token_expires
     )
-
-    return {"access_token": access_token, "token_type": "bearer"}
+    
+    # Return user role information along with the token
+    return {
+        "access_token": access_token, 
+        "token_type": "bearer",
+        "isAdmin": user.get("isAdmin", False),
+        "isApproved": user.get("isApproved", False)
+    }

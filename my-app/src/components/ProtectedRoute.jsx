@@ -1,11 +1,12 @@
-import { Navigate } from 'react-router-dom';
+// ProtectedRoute.jsx
+import { Navigate, Outlet } from 'react-router-dom';
 
-const ProtectedRoute = ({ token, children }) => {
-  if (!token) {
+const ProtectedRoute = ({ auth }) => {
+  if (!auth.token) {
     return <Navigate to="/login" replace />;
   }
 
-  return children;
+  return <Outlet />;
 };
 
 export default ProtectedRoute;

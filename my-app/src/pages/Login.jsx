@@ -27,9 +27,23 @@ function Login({ onLogin }) {
         throw new Error(errorData.detail);
       }
 
-      const { access_token } = await response.json();
-      onLogin(access_token);
-      navigate('/dashboard')
+      const userData = await response.json();
+      const { access_token, isAdmin, isApproved } = userData;
+      
+      
+      // Pass all user data to the parent component
+      onLogin({
+        token: access_token,
+        isAdmin,
+        isApproved
+      });
+      
+      // Redirect based on approval status
+      if (!isApproved) {
+        navigate('/pending-approval');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       setError(err.message);
     }
@@ -39,6 +53,11 @@ function Login({ onLogin }) {
     <>
       <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+          <img
+            src="/setu.webp"
+            alt="Setu Logo"
+            className="mx-auto h-auto w-auto mb-6"
+          />
           <h2 className="mt-10 text-center text-2xl font-bold tracking-tight text-gray-900">
             Sign in to your account
           </h2>
@@ -67,7 +86,10 @@ function Login({ onLogin }) {
         <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm/6 font-medium text-gray-900">
+              <label
+                htmlFor="email"
+                className="block text-sm/6 font-medium text-gray-900"
+              >
                 Email address
               </label>
               <div className="mt-2">
@@ -77,18 +99,24 @@ function Login({ onLogin }) {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="email"
-                  className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                  className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-lime-600 sm:text-sm/6"
                 />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between">
-                <label htmlFor="password" className="block text-sm/6 font-medium text-gray-900">
+                <label
+                  htmlFor="password"
+                  className="block text-sm/6 font-medium text-gray-900"
+                >
                   Password
                 </label>
                 <div className="text-sm">
-                  <a href="#" className="font-semibold text-indigo-600 hover:text-indigo-500">
+                  <a
+                    href="#"
+                    className="font-semibold text-lime-600 hover:text-lime-500"
+                  >
                     Forgot password?
                   </a>
                 </div>
@@ -100,7 +128,7 @@ function Login({ onLogin }) {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   autoComplete="current-password"
-                  className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+                  className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-lime-600 sm:text-sm/6"
                 />
               </div>
             </div>
@@ -108,24 +136,25 @@ function Login({ onLogin }) {
             <div>
               <button
                 type="submit"
-                className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                className="flex w-full justify-center rounded-md bg-lime-600 px-3 py-1.5 text-sm/6 font-semibold text-white shadow-xs hover:bg-lime-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-lime-600 cursor-pointer"
               >
                 Sign in
               </button>
             </div>
-
           </form>
           <hr className="my-6 border-t border-gray-300" />
           <div className="mt-4">
             <GoogleButton />
           </div>
           <p className="mt-10 text-center text-sm/6 text-gray-500">
-            Not a member?{' '}
-            <Link to="/register" className="font-semibold text-indigo-600 hover:text-indigo-600">
+            Not a member?{" "}
+            <Link
+              to="/register"
+              className="font-semibold text-lime-600 hover:text-lime-600"
+            >
               Register
             </Link>
           </p>
-
         </div>
       </div>
     </>

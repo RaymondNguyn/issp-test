@@ -9,11 +9,20 @@ class UserCreate(BaseModel):
     password: str
     sensors: Optional[List[str]] = []
     projects: Optional[List[str]] = []
+    isAdmin: bool = False
+    isApproved: bool = False
 
 class User(BaseModel):
-    email: str
     name: str
+    email: str
+    isAdmin: bool = False
+    isApproved: bool = False
 
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+class TokenWithUserInfo(Token):
+    isAdmin: bool = False
+    isApproved: bool = False
+    
