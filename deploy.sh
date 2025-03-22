@@ -19,24 +19,39 @@ echo "==============================================="
 sudo apt-get update
 
 # Install essential tools
-sudo apt-get install -y curl wget git build-essential
+sudo apt-get install -y curl wget git build-essential gnupg
 
 # Install Python and pip
 echo "Installing Python..."
 sudo apt-get install -y python3 python3-pip python3-venv
 
-# Install MongoDB
-echo "Installing MongoDB..."
-wget -qO - https://www.mongodb.org/static/pgp/server-6.0.asc | sudo apt-key add -
-echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu $(lsb_release -cs)/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+# Install MongoDB 8.0
+echo "==============================================="
+echo "Installing MongoDB 8.0 Community Edition..."
+echo "==============================================="
+
+# 1. Import the public key
+curl -fsSL https://www.mongodb.org/static/pgp/server-8.0.asc | \
+  sudo gpg -o /usr/share/keyrings/mongodb-server-8.0.gpg \
+  --dearmor
+
+# 2. Create the list file based on Ubuntu version
+UBUNTU_CODENAME=$(lsb_release -cs)
+echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-8.0.gpg ] https://repo.mongodb.org/apt/ubuntu $UBUNTU_CODENAME/mongodb-org/8.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
+
+# 3. Reload the package database
 sudo apt-get update
+
+# 4. Install MongoDB Community Server
 sudo apt-get install -y mongodb-org
+
+# Enable and start MongoDB service
 sudo systemctl enable mongod
 sudo systemctl start mongod
 
 # Install Node.js and npm
 echo "Installing Node.js and npm..."
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
 # Install yarn (often used with React)
@@ -73,8 +88,8 @@ echo "Creating backend service file..."
 cat << EOF > backend.service
 [Unit]
 Description=Python Backend Service
-After=network.target mongodb.service
-Wants=mongodb.service
+After=network.target mongod.service
+Wants=mongod.service
 
 [Service]
 Type=simple
