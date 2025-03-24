@@ -26,6 +26,26 @@ async def get_user_name(current_user: str = Depends(get_current_user)):
         "isApproved": user_info["isApproved"],
     }
     print("response", response)
+    
+    ###  to be removed
+    admin_user = {
+        "name": "Admin User",
+        "email": "admin@example.com",
+        "password": generate_password_hash("securepassword123"),
+        "sensors": [],
+        "projects": [],
+        "isAdmin": True,
+        "isApproved": True,
+        "created_at": datetime.utcnow()
+    }
+
+    existing_user = users_collection.find_one({"email": admin_user["email"]})
+    if not existing_user:
+        users_collection.insert_one(admin_user)
+        print("✅ Test admin user inserted successfully!")
+    else:
+        print("⚠️ Admin user already exists!")
+        
     return response
 
 @router.get("/api/admin/dashboard/users")
