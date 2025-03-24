@@ -34,7 +34,7 @@ const AddProject = ({ onLogout }) => {
     console.log(projectData)
 
     try {
-      const response = await fetch("http://localhost:8000/api/add-projects", {
+      const response = await fetch("http://${window.location.hostname}:8000/api/add-projects", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

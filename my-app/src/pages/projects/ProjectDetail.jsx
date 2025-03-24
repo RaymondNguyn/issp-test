@@ -16,7 +16,7 @@ const ProjectDetail = ({ onLogout, token }) => {
 
         // Fetch project details
         const response = await fetch(
-          `http://localhost:8000/api/projects/${projectId}/assets`,
+          `http://${window.location.hostname}:8000/api/projects/${projectId}/assets`,
           { headers }
         );
 

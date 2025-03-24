@@ -23,7 +23,7 @@ function Projects({ onLogout, token }) {
         return;
       }
 
-      const response = await fetch("http://localhost:8000/api/projects", {
+      const response = await fetch("http://${window.location.hostname}:8000/api/projects", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -70,7 +70,7 @@ function Projects({ onLogout, token }) {
       }
 
       const response = await fetch(
-        `http://localhost:8000/api/projects/${projectId}`,
+        `http://${window.location.hostname}:8000/api/projects/${projectId}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },

@@ -1,4 +1,3 @@
-# main.py
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
@@ -6,13 +5,22 @@ from routes.auth_routes import router as auth_routes
 from routes.user_routes import router as user_routes
 from routes.sensor_routes import router as sensor_routes
 from routes.project_routes import router as project_routes
+import socket
 
 app = FastAPI()
+
+hostname = socket.gethostname()
+ip_address = socket.gethostbyname(hostname)
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",           
+        f"http://{ip_address}:5173",       
+        f"http://{ip_address}:3000",     
+        "*",                              
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -18,7 +18,7 @@ function SensorDetail({ auth }) {
 
   const fetchSensorData = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/api/sensor-data/${sensorId}`, {
+      const response = await fetch(`http://${window.location.hostname}:8000/api/sensor-data/${sensorId}`, {
         headers: {
           Authorization: `Bearer ${auth.token}`,
         },

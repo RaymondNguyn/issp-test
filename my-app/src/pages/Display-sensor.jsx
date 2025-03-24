@@ -23,7 +23,7 @@ function DisplaySensor({ auth }) {
 
   const fetchSensors = async (assetId) => {
     try {
-      const response = await fetch(`http://localhost:8000/api/sensors/${assetId}`, {
+      const response = await fetch(`http://${window.location.hostname}:8000/api/sensors/${assetId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -53,7 +53,7 @@ function DisplaySensor({ auth }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:8000/api/add-sensors', {
+      const response = await fetch('http://${window.location.hostname}:8000/api/add-sensors', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

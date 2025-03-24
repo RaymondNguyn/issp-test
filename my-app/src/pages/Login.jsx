@@ -15,7 +15,7 @@ function Login({ onLogin }) {
       formData.append('username', email);
       formData.append('password', password);
 
-      const response = await fetch('http://localhost:8000/token', {
+      const response = await fetch('http://${window.location.hostname}:8000/token', {
         method: 'POST',
         body: formData
       });

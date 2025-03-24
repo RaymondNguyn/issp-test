@@ -43,7 +43,7 @@ function Assets({ onLogout }) {
       }
 
       const response = await fetch(
-        `http://localhost:8000/api/projects/${projectId}/assets/${assetId}`,
+        `http://${window.location.hostname}:8000/api/projects/${projectId}/assets/${assetId}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
@@ -77,7 +77,7 @@ function Assets({ onLogout }) {
 
       // Fetch project details
       const projectResponse = await fetch(
-        `http://localhost:8000/api/projects/${projectId}/assets`,
+        `http://${window.location.hostname}:8000/api/projects/${projectId}/assets`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -97,7 +97,7 @@ function Assets({ onLogout }) {
 
       // Fetch assets for the project
       const assetsResponse = await fetch(
-        `http://localhost:8000/api/projects/${projectId}/assets`,
+        `http://${window.location.hostname}:8000/api/projects/${projectId}/assets`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -154,7 +154,7 @@ function Assets({ onLogout }) {
       console.log("Sending asset data:", newAsset);
 
       const response = await fetch(
-        `http://localhost:8000/api/projects/${projectId}/add-assets`,
+        `http://${window.location.hostname}:8000/api/projects/${projectId}/add-assets`,
         {
           method: "POST",
           headers: {

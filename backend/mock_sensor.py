@@ -28,7 +28,7 @@ def generate_mock_data():
         "timestamp": datetime.utcnow().isoformat()
     }
 
-url = "http://localhost:8000/api/receive-sensor-data"
+url = "http://${window.location.hostname}:8000/api/receive-sensor-data"
 
 mock_data = generate_mock_data()
 
