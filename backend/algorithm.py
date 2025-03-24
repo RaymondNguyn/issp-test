@@ -79,7 +79,7 @@ def check_boundary(dataset,name):
         # Iterating over each value to see if its too high, too low or normal.
         for value in dataset:  
             # Waiting 30 minutes (1800 seconds) before it processes the value.
-            time.sleep(1)
+            time.sleep(1800)
             if value > upper_limit:
                 # Sends a notification with the title of system alert and the message of which section sent the warning.
                 body = f"WARNING SECTION {name} IS ABNORMALLY HIGH: {value}"
