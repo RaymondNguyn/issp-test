@@ -11,6 +11,7 @@ function DisplaySensor({ auth }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
   const { assetId, projectId } = useParams(); // Get assetId from the URL params
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
     if (assetId) {
@@ -23,7 +24,7 @@ function DisplaySensor({ auth }) {
 
   const fetchSensors = async (assetId) => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:8000/api/sensors/${assetId}`, {
+      const response = await fetch(`http://${backendUrl}:8000/api/sensors/${assetId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -53,7 +54,7 @@ function DisplaySensor({ auth }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://${window.location.hostname}:8000/api/add-sensors', {
+      const response = await fetch(`http://${backendUrl}:8000/api/add-sensors`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

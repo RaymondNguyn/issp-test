@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import GoogleButton from '../components/googlebutton';
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 function Login({ onLogin }) {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ function Login({ onLogin }) {
       formData.append('username', email);
       formData.append('password', password);
 
-      const response = await fetch('http://${window.location.hostname}:8000/token', {
+      const response = await fetch(`http://${backendUrl}:8000/token`, {
         method: 'POST',
         body: formData
       });

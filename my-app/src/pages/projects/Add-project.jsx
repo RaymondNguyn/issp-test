@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const AddProject = ({ onLogout }) => {
   const [projectName, setProjectName] = useState("");
@@ -34,7 +35,7 @@ const AddProject = ({ onLogout }) => {
     console.log(projectData)
 
     try {
-      const response = await fetch("http://${window.location.hostname}:8000/api/add-projects", {
+      const response = await fetch(`http://${backendUrl}:8000/api/add-projects`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

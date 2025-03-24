@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 function Register() {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ function Register() {
     }
 
     try {
-      const response = await fetch("http://${window.location.hostname}:8000/api/register", {
+      const response = await fetch(`http://${backendUrl}:8000/api/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),

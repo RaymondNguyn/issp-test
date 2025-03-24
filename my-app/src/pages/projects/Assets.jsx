@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 function Assets({ onLogout }) {
   const [assets, setAssets] = useState([]);
@@ -43,7 +44,7 @@ function Assets({ onLogout }) {
       }
 
       const response = await fetch(
-        `http://${window.location.hostname}:8000/api/projects/${projectId}/assets/${assetId}`,
+        `http://${backendUrl}:8000/api/projects/${projectId}/assets/${assetId}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
@@ -77,7 +78,7 @@ function Assets({ onLogout }) {
 
       // Fetch project details
       const projectResponse = await fetch(
-        `http://${window.location.hostname}:8000/api/projects/${projectId}/assets`,
+        `http://${backendUrl}:8000/api/projects/${projectId}/assets`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -97,7 +98,7 @@ function Assets({ onLogout }) {
 
       // Fetch assets for the project
       const assetsResponse = await fetch(
-        `http://${window.location.hostname}:8000/api/projects/${projectId}/assets`,
+        `http://${backendUrl}:8000/api/projects/${projectId}/assets`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -154,7 +155,7 @@ function Assets({ onLogout }) {
       console.log("Sending asset data:", newAsset);
 
       const response = await fetch(
-        `http://${window.location.hostname}:8000/api/projects/${projectId}/add-assets`,
+        `http://${backendUrl}:8000/api/projects/${projectId}/add-assets`,
         {
           method: "POST",
           headers: {

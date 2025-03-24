@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 
 
@@ -39,7 +40,7 @@ const PendingApproval = ({ onLogout }) => {
             </p>
             
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => backendUrl.reload()}
               className="w-full py-2 text-sm font-medium text-white bg-blue-500 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               Check Status Again

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 // **Flatten nested objects into columns**
 const flattenSensorData = (data) => {
@@ -46,7 +47,7 @@ export function SensorTable() {
 
     try {
       const response = await fetch(
-        "http://${window.location.hostname}:8000/api/user/display-sensor-dash",
+        `http://${backendUrl}:8000/api/user/display-sensor-dash`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

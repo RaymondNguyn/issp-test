@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Sidebar } from "../components/sidenav";
 import { TopNav } from "../components/topnav";
 import { SensorTable } from "../components/SensorTable";
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 function Dashboard({ onLogout, auth }) {
   const [data, setData] = useState(null);
@@ -19,7 +20,7 @@ function Dashboard({ onLogout, auth }) {
 
   const fetchData = async () => {
     try {
-      const response = await fetch("http://${window.location.hostname}:8000/api/user", {
+      const response = await fetch(`http://${backendUrl}:8000/api/user`, {
         headers: {
           Authorization: `Bearer ${auth.token}`,
         },

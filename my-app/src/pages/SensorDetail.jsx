@@ -4,6 +4,7 @@ import { Sidebar } from "../components/sidenav";
 import { TopNav } from "../components/topnav";
 import { SensorChart } from "../components/Graph";
 import { SensorDataTable } from "../components/Table"; 
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 function SensorDetail({ auth }) {
   const { sensorId } = useParams(); // Get sensorId from URL
@@ -18,7 +19,7 @@ function SensorDetail({ auth }) {
 
   const fetchSensorData = async () => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:8000/api/sensor-data/${sensorId}`, {
+      const response = await fetch(`http://${backendUrl}:8000/api/sensor-data/${sensorId}`, {
         headers: {
           Authorization: `Bearer ${auth.token}`,
         },

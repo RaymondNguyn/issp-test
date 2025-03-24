@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "../../components/Layout";
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 function Projects({ onLogout, token }) {
   const [projects, setProjects] = useState([]);
@@ -23,7 +24,7 @@ function Projects({ onLogout, token }) {
         return;
       }
 
-      const response = await fetch("http://${window.location.hostname}:8000/api/projects", {
+      const response = await fetch(`http://${backendUrl}:8000/api/projects`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -70,7 +71,7 @@ function Projects({ onLogout, token }) {
       }
 
       const response = await fetch(
-        `http://${window.location.hostname}:8000/api/projects/${projectId}`,
+        `http://${backendUrl}:8000/api/projects/${projectId}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },

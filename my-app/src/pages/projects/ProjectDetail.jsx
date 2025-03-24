@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Layout } from "../../components/Layout";
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 const ProjectDetail = ({ onLogout, token }) => {
   const { projectId } = useParams(); // Get the projectId from the URL
@@ -16,7 +17,7 @@ const ProjectDetail = ({ onLogout, token }) => {
 
         // Fetch project details
         const response = await fetch(
-          `http://${window.location.hostname}:8000/api/projects/${projectId}/assets`,
+          `http://${backendUrl}:8000/api/projects/${projectId}/assets`,
           { headers }
         );
 

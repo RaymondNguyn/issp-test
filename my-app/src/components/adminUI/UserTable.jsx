@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 import {
   Table,
   TableBody,
@@ -27,7 +28,7 @@ export function UsersTable() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://${window.location.hostname}:8000/api/admin/dashboard/users", {
+      const response = await fetch(`http://${backendUrl}:8000/api/admin/dashboard/users`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
           "Content-Type": "application/json"
@@ -51,7 +52,7 @@ export function UsersTable() {
   // Toggle admin status
   const toggleAdminStatus = async (userId, currentStatus) => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:8000/api/admin/users/${userId}`, {
+      const response = await fetch(`http://${backendUrl}:8000/api/admin/users/${userId}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -78,7 +79,7 @@ export function UsersTable() {
   // Toggle approval status
   const toggleApprovalStatus = async (userId, currentStatus) => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:8000/api/admin/users/${userId}`, {
+      const response = await fetch(`http://${backendUrl}:8000/api/admin/users/${userId}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -104,7 +105,7 @@ export function UsersTable() {
   // Reset password
   const resetPassword = async (userId) => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:8000/api/admin/users/${userId}/reset-password`, {
+      const response = await fetch(`http://${backendUrl}:8000/api/admin/users/${userId}/reset-password`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -126,7 +127,7 @@ export function UsersTable() {
   // Login as user
   const loginAsUser = async (userId) => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:8000/api/admin/users/${userId}/login-as`, {
+      const response = await fetch(`http://${backendUrl}:8000/api/admin/users/${userId}/login-as`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
