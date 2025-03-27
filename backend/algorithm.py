@@ -59,9 +59,9 @@ def get_list():
     return store_list
 
 # GET emial details
-email_sender = "hk580dev@gmail.com"
-email_password = "seorymxmfqqgczhe"
-email_reciever = "hkakooza1@my.bcit.ca"
+email_sender = "email"
+email_password = "app_authentication_password"
+email_reciever = "client_email"
 
 # Create SSL context for secure connection
 context_block = ssl.create_default_context(cafile=certifi.where())
