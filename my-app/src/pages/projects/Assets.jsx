@@ -77,7 +77,7 @@ function Assets({ onLogout }) {
 
       // Fetch project details
       const projectResponse = await fetch(
-        `http://localhost:8000/api/projects/${projectId}/assets`,
+        `http://localhost:8000/api/projects/${projectId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -113,7 +113,6 @@ function Assets({ onLogout }) {
       }
 
       const assetsData = await assetsResponse.json();
-      console.log("assetsData:", assetsData);
       setAssets(assetsData);
       setLoading(false);
     } catch (err) {
@@ -145,21 +144,19 @@ function Assets({ onLogout }) {
 
     try {
       const newAsset = {
-        asset_name: assetName,
+        name: assetName,
         description: description,
-        date: date ? date.toISOString().split("T")[0] : null,
+        date: date ? date.toISOString() : null,
         project_id: projectId,
       };
-
-      console.log("Sending asset data:", newAsset);
 
       const response = await fetch(
         `http://localhost:8000/api/projects/${projectId}/add-assets`,
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(newAsset),
         }
@@ -167,32 +164,30 @@ function Assets({ onLogout }) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to create asset");
+        throw new Error(errorData.detail || "Failed to add asset");
       }
 
       const responseData = await response.json();
-      console.log("Response:", responseData);
+
+      // Reset form
+      setAssetName("");
+      setDescription("");
+      setDate(null);
+      setShowForm(false);
+      setFormError(null);
 
       // Add the new asset to the list without reloading
       setAssets((prevAssets) => [...prevAssets, responseData]);
 
-      // Reset form
-      setShowForm(false);
-      setAssetName("");
-      setDescription("");
-      setDate(null);
-      setFormError(null);
+      alert("Asset added successfully!");
     } catch (err) {
-      setFormError("Failed to create asset: " + err.message);
-      console.error("Error:", err);
+      setFormError(err.message);
     }
-    console.log("Sending asset data:", newAsset);
   };
 
   const formatDate = (dateString) => {
-    const options = { year: "numeric", month: "long", day: "numeric" };
     const date = new Date(dateString);
-    return date.toLocaleDateString(undefined, options);
+    return date.toLocaleDateString();
   };
 
   if (loading) {
@@ -232,104 +227,60 @@ function Assets({ onLogout }) {
       setIsCollapsed={setIsCollapsed}
     >
       <div className={`p-6 ${isCollapsed ? "ml-[52px]" : "ml-0"}`}>
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Project Assets</h1>
-          <button
-            onClick={handleBackToProjects}
-            className="mt-6 bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-md transition duration-200 cursor-pointer"
-          >
-            Back to Projects
-          </button>
-        </div>
-
         {/* Project Details Section */}
         {project && (
-          <div className="bg-green-50 p-6 rounded-lg shadow-md mb-8 border-l-4 border-green-500">
-            <h2 className="text-xl font-semibold mb-3 text-green-800">
-              {project.project_name}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="mb-8">
+            <button
+              onClick={handleBackToProjects}
+              className="text-blue-600 hover:text-blue-800 mb-4 flex items-center"
+            >
+              <span className="mr-2">←</span> Back to Projects
+            </button>
+
+            <h1 className="text-2xl font-bold mb-6">{project?.name || 'Project Assets'}</h1>
+
+            <div className="grid grid-cols-2 gap-4 mb-6">
               <div>
-                <p className="text-gray-600 text-sm mb-1">Project Date:</p>
+                <p className="text-gray-600">Project Date:</p>
                 <p className="font-medium">
-                  {project.date ? formatDate(project.date) : "Not specified"}
+                  {project?.project_date
+                    ? formatDate(project.project_date)
+                    : "Not specified"}
                 </p>
               </div>
               <div>
-                <p className="text-gray-600 text-sm mb-1">Created:</p>
+                <p className="text-gray-600">Created:</p>
                 <p className="font-medium">
-                  {project.created_at
+                  {project?.created_at
                     ? formatDate(project.created_at)
                     : "Unknown"}
                 </p>
               </div>
-              <div className="col-span-1 md:col-span-2">
-                <p className="text-gray-600 text-sm mb-1">Description:</p>
-                <p className="font-medium bg-white p-3 rounded border border-green-100">
-                  {project.description || "No description available."}
+              <div className="col-span-2">
+                <p className="text-gray-600">Description:</p>
+                <p className="font-medium">
+                  {project?.description || "No description available."}
                 </p>
               </div>
-              {project.sensors && project.sensors.length > 0 && (
-                <div>
-                  <p className="text-gray-600 text-sm mb-1">Sensors:</p>
-                  <p className="font-medium">{project.sensors.length}</p>
-                </div>
-              )}
               <div>
-                <p className="text-gray-600 text-sm mb-1">Project ID:</p>
-                <p className="font-mono text-sm">{project.id}</p>
+                <p className="text-gray-600">Project ID:</p>
+                <p className="font-medium">{project?.project_id}</p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Assets Section Header */}
-        <h2 className="text-xl font-semibold mb-4 mt-6 text-gray-800 border-b pb-2">
-          Assets
-        </h2>
-
-        {/* Display existing assets */}
+        {/* Assets List */}
         {assets.length > 0 ? (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {assets.map((asset) => (
               <div
-                key={asset.id}
-                className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200"
+                key={asset.asset_id}
+                className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
               >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-gray-600 mb-1 text-sm">Asset Name:</p>
-                    <p className="font-medium">{asset.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600 mb-1 text-sm">Asset ID:</p>
-                    <p className="font-mono text-sm">{asset.asset_id}</p>
-                  </div>
-                  {asset.description && (
-                    <div className="col-span-1 md:col-span-2">
-                      <p className="text-gray-600 mb-1 text-sm">Description:</p>
-                      <p className="font-medium">{asset.description}</p>
-                    </div>
-                  )}
-                  {asset.date && (
-                    <div>
-                      <p className="text-gray-600 mb-1 text-sm">Date:</p>
-                      <p className="font-medium">{formatDate(asset.date)}</p>
-                    </div>
-                  )}
-                  {asset.created_at && (
-                    <div>
-                      <p className="text-gray-600 mb-1 text-sm">Created At:</p>
-                      <p className="font-medium">
-                        {formatDate(asset.created_at)}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* View Sensors Button */}
-                {/* View Sensors and Delete Buttons */}
-                <div className="mt-4 flex justify-end space-x-2">
+                <h3 className="text-xl font-semibold mb-2">{asset.name}</h3>
+                <p className="text-gray-600 mb-4">{asset.description}</p>
+                <div className="flex space-x-2">
                   <button
                     onClick={() => handleViewSensors(asset.asset_id)}
                     className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition duration-200 cursor-pointer"
@@ -337,7 +288,7 @@ function Assets({ onLogout }) {
                     View Sensors
                   </button>
                   <button
-                    onClick={() => deleteAsset(asset.id, asset.asset_name)}
+                    onClick={() => deleteAsset(asset.asset_id, asset.asset_name)}
                     className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition duration-200 cursor-pointer"
                   >
                     Delete

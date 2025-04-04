@@ -132,11 +132,40 @@ function DisplaySensor({ auth }) {
                     <div className="mt-2">
                       <p className="font-semibold">Alerts:</p>
                       <ul className="text-sm">
-                        {Object.entries(sensor.alerts).map(([key, status]) => (
-                          <li key={key} className={status === "danger" ? "text-red-500" : "text-gray-700"}>
-                            {key}: {status}
-                          </li>
-                        ))}
+                        {Object.entries(sensor.alerts).map(([key, status]) => {
+                          if (typeof status === 'object') {
+                            // Handle nested alerts (e.g., accelerometer)
+                            return (
+                              <li key={key}>
+                                <span className="font-medium">{key}:</span>
+                                <ul className="ml-4">
+                                  {Object.entries(status).map(([subKey, subStatus]) => (
+                                    <li
+                                      key={`${key}-${subKey}`}
+                                      className={`${subStatus === "danger" ? "text-red-500" : 
+                                                 subStatus === "warning" ? "text-yellow-500" : 
+                                                 "text-gray-700"}`}
+                                    >
+                                      {subKey}: {subStatus}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </li>
+                            );
+                          } else {
+                            // Handle simple alerts
+                            return (
+                              <li
+                                key={key}
+                                className={`${status === "danger" ? "text-red-500" : 
+                                           status === "warning" ? "text-yellow-500" : 
+                                           "text-gray-700"}`}
+                              >
+                                {key}: {status}
+                              </li>
+                            );
+                          }
+                        })}
                       </ul>
                     </div>
                   ) : (

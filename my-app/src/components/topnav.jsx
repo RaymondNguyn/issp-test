@@ -1,6 +1,7 @@
 import { useLocation } from "react-router-dom";
 import React from "react";
-import { User, Bell, LogOut, Settings } from "lucide-react";
+import { User, LogOut, Settings } from "lucide-react";
+import NotificationBell from './NotificationBell/NotificationBell';
 
 
 import {
@@ -12,9 +13,6 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
-const navigation = [
-  { name: "Analytics", href: "/notification", icon: Bell },
-];
 
 
 export function TopNav({ onLogout,token,userData }) {
@@ -60,16 +58,7 @@ export function TopNav({ onLogout,token,userData }) {
             Admin
           </a>
         )}
-          {navigation.map(({ name, href, icon: Icon }) => (
-            <a
-              key={name}
-              href={href}
-              className="text-white hover:text-gray-900 transition-colors"
-              title={name}
-            >
-              <Icon className="h-6 w-6" />
-            </a>
-          ))}
+          <NotificationBell auth={{ token }} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center text-white hover:text-gray-900">

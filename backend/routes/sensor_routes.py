@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
 from services.sensor_service import process_sensor_data, classify_alert
 from models.sensor_model import BaseSensorData, SensorDefinition
-from database import sensor_data_collection, sensors_collection, users_collection, assets_collection, projects_collection
+from database import sensor_data_collection, sensors_collection, users_collection, assets_collection, projects_collection, notification_collection
 from datetime import datetime
 import uuid
-from datetime import datetime
+from models.notification_model import Notification
 from services.auth_service import (
     get_password_hash,
     verify_password,
@@ -29,10 +29,43 @@ async def receive_sensor_data(data: Dict[str, Any]):
         alerts = classify_alert(sensor_data_dict, history)
         sensor_data_dict["alerts"] = alerts
         
-        # insert data into sensor_data collection
-        result = sensor_data_collection.insert_one(sensor_data_dict)
+        # Create notifications for alerts
+        if alerts:
+            for field, status in alerts.items():
+                if isinstance(status, dict):
+                    # Handle nested alerts (e.g., accelerometer with x,y,z)
+                    for sub_field, sub_status in status.items():
+                        if sub_status in ['warning', 'danger']:
+                            notification = Notification(
+                                notification_id=str(uuid.uuid4()),
+                                user_id=sensor['owner_id'],
+                                sensor_id=sensor_id,
+                                message=f"{sub_status.upper()}: Abnormal {field}.{sub_field} reading for sensor {sensor['name']}",
+                                alert_type=sub_status,
+                                data={
+                                    'sensor_data': sensor_data_dict,
+                                    'field': field,
+                                    'sub_field': sub_field
+                                }
+                            )
+                            notification_collection.insert_one(notification.dict())
+                elif status in ['warning', 'danger', 'invalid']:
+                    # Handle simple alerts
+                    notification = Notification(
+                        notification_id=str(uuid.uuid4()),
+                        user_id=sensor['owner_id'],
+                        sensor_id=sensor_id,
+                        message=f"{status.upper()}: Abnormal {field} reading for sensor {sensor['name']}",
+                        alert_type=status,
+                        data={
+                            'sensor_data': sensor_data_dict,
+                            'field': field
+                        }
+                    )
+                    notification_collection.insert_one(notification.dict())
         
-        # update sensors to have alert
+        # Rest of the existing code...
+        result = sensor_data_collection.insert_one(sensor_data_dict)
         sensor_result = sensors_collection.update_one(
             {"sensor_id": sensor_data_dict["sensor_id"]},
             {"$set": {"alerts": alerts}}
@@ -46,6 +79,46 @@ async def receive_sensor_data(data: Dict[str, Any]):
 
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+# Add these new endpoints for notification handling
+@router.get("/api/notifications")
+async def get_notifications(
+    current_user: str = Depends(get_current_user),
+    limit: int = 50,
+    unread_only: bool = False
+):
+    query = {"user_id": current_user}
+    if unread_only:
+        query["read"] = False
+    
+    notifications = list(notification_collection.find(
+        query,
+        sort=[("timestamp", -1)],
+        limit=limit
+    ))
+    
+    # Format results
+    for notification in notifications:
+        notification["_id"] = str(notification["_id"])
+    
+    return notifications
+
+@router.put("/api/notifications/{notification_id}/read")
+async def mark_notification_read(
+    notification_id: str,
+    current_user: str = Depends(get_current_user)
+):
+    result = notification_collection.delete_one(
+        {
+            "notification_id": notification_id,
+            "user_id": current_user
+        }
+    )
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    
+    return {"message": "Notification deleted"}
 
 
 ## Registers sensors Change this to also add sensorID to user
