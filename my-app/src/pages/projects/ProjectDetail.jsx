@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { Layout } from "../../components/Layout";
 
 const ProjectDetail = ({ onLogout, token }) => {
-  const { projectId } = useParams(); // Get the projectId from the URL
+  const { projectId } = useParams();
   const [project, setProject] = useState(null);
   const [error, setError] = useState(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -16,7 +16,7 @@ const ProjectDetail = ({ onLogout, token }) => {
 
         // Fetch project details
         const response = await fetch(
-          `http://localhost:8000/api/projects/${projectId}/assets`,
+          `http://localhost:8000/api/projects/${projectId}`,
           { headers }
         );
 
@@ -25,6 +25,7 @@ const ProjectDetail = ({ onLogout, token }) => {
         }
 
         const data = await response.json();
+        console.log("Project details:", data); // Debug log
         setProject(data);
       } catch (err) {
         setError(err.message);
@@ -32,9 +33,28 @@ const ProjectDetail = ({ onLogout, token }) => {
     };
 
     if (projectId) {
-      fetchProjectDetails(); // Fetch project details only if projectId is defined
+      fetchProjectDetails();
     }
   }, [projectId]);
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "Not specified";
+
+    try {
+      const options = { year: "numeric", month: "long", day: "numeric" };
+      const date = new Date(dateString);
+
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return "Invalid date";
+      }
+
+      return date.toLocaleDateString(undefined, options);
+    } catch (error) {
+      console.error("Date formatting error:", error);
+      return "Date error";
+    }
+  };
 
   if (error) {
     return <div className="text-red-500">{error}</div>;
@@ -53,11 +73,17 @@ const ProjectDetail = ({ onLogout, token }) => {
       <div className="p-6">
         <h2 className="text-2xl font-bold mb-4">Project Details</h2>
         <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold mb-2">{project.project_name}</h3>
-          <p className="text-gray-700 mb-2">{project.description}</p>
-          <p className="text-gray-500">Date: {project.date}</p>
+          <h3 className="text-xl font-semibold mb-2">{project.name}</h3>
+          <p className="text-gray-700 mb-2">
+            {project.description || "No description"}
+          </p>
+          <p className="text-gray-500">Date: {formatDate(project.date)}</p>
+          <p className="text-gray-500">Project ID: {project.project_id}</p>
           <p className="text-gray-500">
-            Created At: {new Date(project.created_at).toLocaleString()}
+            Sensors:{" "}
+            {project.sensor_ids && project.sensor_ids.length > 0
+              ? project.sensor_ids.length
+              : "None"}
           </p>
         </div>
       </div>

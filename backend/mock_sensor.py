@@ -4,7 +4,7 @@ from datetime import datetime
 
 def generate_mock_data():
     return {
-        "sensor_id": "sensor_02",
+        "sensor_id": "87e462ed-f07d-459f-b178-5a7e5ad73090",
         "adc": random.randint(0, 1023),
         "position": f"{random.uniform(-90, 90)}, {random.uniform(-180, 180)}", 
         "roll": random.uniform(-180, 180),

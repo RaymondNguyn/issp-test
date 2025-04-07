@@ -37,7 +37,7 @@ function Projects({ onLogout, token }) {
       }
 
       const projectsData = await response.json();
-      console.log(projectsData)
+      console.log("Projects data:", projectsData); // Debug log
       setProjects(projectsData);
       setLoading(false);
     } catch (err) {
@@ -47,7 +47,6 @@ function Projects({ onLogout, token }) {
   };
 
   const handleViewAssets = (projectId) => {
-    // Navigate to the assets page with the project ID
     navigate(`/projects/${projectId}/assets`);
   };
 
@@ -85,7 +84,9 @@ function Projects({ onLogout, token }) {
       alert("Project successfully deleted");
 
       // Remove the deleted project from the state
-      setProjects(projects.filter((project) => project.id !== projectId));
+      setProjects(
+        projects.filter((project) => project.project_id !== projectId)
+      );
     } catch (err) {
       setError(err.message);
     }
@@ -106,9 +107,22 @@ function Projects({ onLogout, token }) {
   }
 
   const formatDate = (dateString) => {
-    const options = { year: "numeric", month: "long", day: "numeric" };
-    const date = new Date(dateString);
-    return date.toLocaleDateString(undefined, options);
+    if (!dateString) return "Not specified";
+
+    try {
+      const options = { year: "numeric", month: "long", day: "numeric" };
+      const date = new Date(dateString);
+
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return "Invalid date";
+      }
+
+      return date.toLocaleDateString(undefined, options);
+    } catch (error) {
+      console.error("Date formatting error:", error);
+      return "Date error";
+    }
   };
 
   return (
@@ -141,12 +155,7 @@ function Projects({ onLogout, token }) {
                 key={project.project_id}
                 className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 relative"
               >
-                <h2 className="text-xl font-semibold mb-2">
-                  {project.name}
-                </h2>
-                <p className="text-gray-600 mb-2 text-sm">
-                  Created: {formatDate(project.created_at)}
-                </p>
+                <h2 className="text-xl font-semibold mb-2">{project.name}</h2>
                 <p className="text-gray-700 mb-2">
                   {project.description
                     ? project.description.length > 100
@@ -159,11 +168,13 @@ function Projects({ onLogout, token }) {
                 </p>
                 <p className="text-gray-600 mb-2 text-sm">
                   Sensors:{" "}
-                  {project.sensors && project.sensors.length > 0
-                    ? project.sensors.length
+                  {project.sensor_ids && project.sensor_ids.length > 0
+                    ? project.sensor_ids.length
                     : "None"}
                 </p>
-                <p className="text-gray-500 mb-4 text-xs">ID: {project.project_id}</p>
+                <p className="text-gray-500 mb-4 text-xs">
+                  ID: {project.project_id}
+                </p>
                 <div className="flex justify-between">
                   <button
                     onClick={() => handleViewAssets(project.project_id)}
@@ -173,7 +184,7 @@ function Projects({ onLogout, token }) {
                   </button>
                   <button
                     onClick={() =>
-                      deleteProject(project.id, project.project_name)
+                      deleteProject(project.project_id, project.name)
                     }
                     className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition duration-200 cursor-pointer ml-2"
                   >

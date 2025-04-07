@@ -143,3 +143,80 @@ async def add_asset_to_project(
     
     return AssetDefinition(**created_asset)
 
+@router.get("/api/projects/{project_id}", response_model=ProjectInDB)
+async def get_project_details(
+    project_id: str,
+    current_user: str = Depends(get_current_user)
+):
+    # Find the project to verify access
+    project = projects_collection.find_one({"project_id": project_id, "owner_id": current_user})
+    
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found or access denied")
+    
+    # Convert MongoDB ObjectId to string
+    project["_id"] = str(project["_id"])
+    
+    return project
+
+@router.delete("/api/projects/{project_id}", response_model=dict)
+async def delete_project(
+    project_id: str,
+    current_user: str = Depends(get_current_user)
+):
+    # First, check if the project exists and belongs to the current user
+    project = projects_collection.find_one({"project_id": project_id, "owner_id": current_user})
+    
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found or access denied")
+    
+    # Delete the project
+    delete_result = projects_collection.delete_one({"project_id": project_id, "owner_id": current_user})
+    
+    if delete_result.deleted_count == 0:
+        raise HTTPException(status_code=500, detail="Failed to delete project")
+    
+    # Remove the project reference from user document
+    users_collection.update_one(
+        {"email": current_user},
+        {"$pull": {"projects": project_id}}
+    )
+    
+    # Return success message
+    return {"message": "Project deleted successfully"}
+
+@router.delete("/api/assets/{asset_id}", response_model=dict)
+async def delete_asset(
+    asset_id: str,
+    current_user: str = Depends(get_current_user)
+):
+    # First, check if the asset exists and belongs to the current user
+    asset = assets_collection.find_one({"asset_id": asset_id, "owner_id": current_user})
+    
+    if not asset:
+        raise HTTPException(status_code=404, detail="Asset not found or access denied")
+    
+    # Get the project_id before deleting the asset
+    project_id = asset.get("project_id")
+    
+    # Delete the asset
+    delete_result = assets_collection.delete_one({"asset_id": asset_id, "owner_id": current_user})
+    
+    if delete_result.deleted_count == 0:
+        raise HTTPException(status_code=500, detail="Failed to delete asset")
+    
+    # Remove the asset reference from user document
+    users_collection.update_one(
+        {"email": current_user},
+        {"$pull": {"assets": asset_id}}
+    )
+    
+    # Remove the asset reference from project document if project_id exists
+    if project_id:
+        projects_collection.update_one(
+            {"project_id": project_id},
+            {"$pull": {"asset_ids": asset_id}}
+        )
+    
+    # Return success message
+    return {"message": "Asset deleted successfully"}
