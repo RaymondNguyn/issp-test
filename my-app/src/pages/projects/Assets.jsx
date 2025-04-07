@@ -42,8 +42,9 @@ function Assets({ onLogout }) {
         return;
       }
 
+      // Updated URL to match the backend route
       const response = await fetch(
-        `http://localhost:8000/api/projects/${projectId}/assets/${assetId}`,
+        `http://localhost:8000/api/assets/${assetId}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
@@ -58,7 +59,7 @@ function Assets({ onLogout }) {
       alert("Asset successfully deleted");
 
       // Remove the deleted asset from the state
-      setAssets(assets.filter((asset) => asset.id !== assetId));
+      setAssets(assets.filter((asset) => asset.asset_id !== assetId));
     } catch (err) {
       setError(err.message);
     }
@@ -229,17 +230,12 @@ function Assets({ onLogout }) {
       <div className={`p-6 ${isCollapsed ? "ml-[52px]" : "ml-0"}`}>
         {/* Project Details Section */}
         {project && (
-          <div className="mb-8">
-            <button
-              onClick={handleBackToProjects}
-              className="text-blue-600 hover:text-blue-800 mb-4 flex items-center"
-            >
-              <span className="mr-2">←</span> Back to Projects
-            </button>
 
-            <h1 className="text-2xl font-bold mb-6">{project?.name || 'Project Assets'}</h1>
-
-            <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="bg-green-50 p-6 rounded-lg shadow-md mb-8 border-l-4 border-green-500">
+            <h2 className="text-xl font-semibold mb-3 text-green-800">
+              {project.name}
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-gray-600">Project Date:</p>
                 <p className="font-medium">
@@ -248,23 +244,29 @@ function Assets({ onLogout }) {
                     : "Not specified"}
                 </p>
               </div>
-              <div>
-                <p className="text-gray-600">Created:</p>
+              {/* <div>
+                <p className="text-gray-600 text-sm mb-1">Assets:</p>
                 <p className="font-medium">
-                  {project?.created_at
-                    ? formatDate(project.created_at)
-                    : "Unknown"}
+                  {project.assets_ids && project.assets_ids.length > 0
+                    ? project.assets_ids.length
+                    : "None"}
+                </p>
+              </div> */}
+              <div className="col-span-1 md:col-span-2">
+                <p className="text-gray-600 text-sm mb-1">Description:</p>
+                <p className="font-medium bg-white p-3 rounded border border-green-100">
+                  {project.description || "No description available."}
                 </p>
               </div>
-              <div className="col-span-2">
-                <p className="text-gray-600">Description:</p>
-                <p className="font-medium">
-                  {project?.description || "No description available."}
-                </p>
-              </div>
+              {project.sensor_ids && project.sensor_ids.length > 0 && (
+                <div>
+                  <p className="text-gray-600 text-sm mb-1">Sensors:</p>
+                  <p className="font-medium">{project.sensor_ids.length}</p>
+                </div>
+              )}
               <div>
-                <p className="text-gray-600">Project ID:</p>
-                <p className="font-medium">{project?.project_id}</p>
+                <p className="text-gray-600 text-sm mb-1">Project ID:</p>
+                <p className="font-mono text-sm">{project.project_id}</p>
               </div>
             </div>
           </div>
@@ -288,8 +290,9 @@ function Assets({ onLogout }) {
                     View Sensors
                   </button>
                   <button
-                    onClick={() => deleteAsset(asset.asset_id, asset.asset_name)}
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition duration-200 cursor-pointer"
+
+                    onClick={() => deleteAsset(asset.asset_id, asset.name)}
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition duration-200 cursor-pointer ml-2"
                   >
                     Delete
                   </button>
