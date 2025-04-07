@@ -239,8 +239,8 @@ function Assets({ onLogout }) {
               <div>
                 <p className="text-gray-600">Project Date:</p>
                 <p className="font-medium">
-                  {project?.project_date
-                    ? formatDate(project.project_date)
+                  {project?.date
+                    ? formatDate(project.date)
                     : "Not specified"}
                 </p>
               </div>
