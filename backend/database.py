@@ -30,6 +30,11 @@ def setup_mongodb():
         db.assets.create_index([("owner_id", ASCENDING)])  # For finding user's projects
         db.assets.create_index([("name", ASCENDING), ("owner_id", ASCENDING)])  # For checking duplicates per user
     
+    if "notifications" not in db.list_collection_names():
+        db.create_collection("notifications")
+        db.notifications.create_index([("user_id", ASCENDING)])
+        db.notifications.create_index([("timestamp", DESCENDING)])
+    
     return {
         "client": client,
         "db": db,
@@ -37,7 +42,8 @@ def setup_mongodb():
         "sensors": db["sensors"],
         "sensor_data": db["sensor_data"],
         "projects": db["projects"],
-        "assets": db["assets"]
+        "assets": db["assets"],
+        "notifications": db["notifications"]
     }
 
 mongodb = setup_mongodb()
@@ -47,3 +53,4 @@ sensors_collection = mongodb["sensors"]
 sensor_data_collection = mongodb["sensor_data"]
 projects_collection = mongodb["projects"]
 assets_collection = mongodb["assets"]
+notification_collection = mongodb["notifications"]

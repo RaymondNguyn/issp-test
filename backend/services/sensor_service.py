@@ -5,11 +5,23 @@ from typing import List, Dict, Any
 import statistics
 
 def classify_alert(sensor_data: Dict[str, Any], history: List[Dict[str, Any]]) -> Dict[str, Any]:
-    if not history or len(history)<11:
-        return {}
-    
     alerts = {}
     readings = sensor_data.get("readings", {})
+    
+    # First check absolute limits regardless of history
+    for key, value in readings.items():
+        if key == 'pitch' and isinstance(value, (int, float)):
+            if not (-90 <= value <= 90):
+                alerts[key] = 'danger'
+                continue
+        elif key == 'roll' and isinstance(value, (int, float)):
+            if not (-180 <= value <= 180):
+                alerts[key] = 'danger'
+                continue
+    
+    # If we don't have enough history for statistical analysis, return just the absolute limit alerts
+    if not history or len(history) < 3:  # Reduced from 11 to 3 minimum data points
+        return alerts
     
     field_sums = {}
     field_counts = {}
@@ -30,20 +42,33 @@ def classify_alert(sensor_data: Dict[str, Any], history: List[Dict[str, Any]]) -
                         field_sums[key][sub_key] += sub_value
                         field_counts[key][sub_key] += 1
     
-    # Check readings against thresholds
+    # Check readings against thresholds and absolute limits
     for key, value in readings.items():
+        # First check absolute limits for specific fields
+        if key == 'pitch':
+            if not (-90 <= value <= 90):
+                alerts[key] = 'danger'
+                continue
+        elif key == 'roll':
+            if not (-180 <= value <= 180):
+                alerts[key] = 'danger'
+                continue
+
+        # Then check against historical averages
         if key in field_sums:
             if isinstance(value, (int, float)) and field_counts.get(key, 0) > 0:
                 avg = field_sums[key] / field_counts[key]
-                # change numbers here for threshold 20% danger 10% warning
-                alerts[key] = "danger" if value > avg * 1.2 else "warning" if value > avg * 1.1 else "good"
+                # Alert if value deviates significantly from average
+                deviation = abs(value - avg) / avg if avg != 0 else float('inf')
+                alerts[key] = "danger" if deviation > 0.2 else "warning" if deviation > 0.1 else "good"
             
             elif isinstance(value, dict) and isinstance(field_sums.get(key), dict):
                 alerts[key] = {}
                 for sub_key, sub_value in value.items():
                     if isinstance(sub_value, (int, float)) and sub_key in field_sums[key] and field_counts[key].get(sub_key, 0) > 0:
                         avg_sub = field_sums[key][sub_key] / field_counts[key][sub_key]
-                        alerts[key][sub_key] = "danger" if sub_value > avg_sub * 1.2 else "warning" if sub_value > avg_sub * 1.1 else "good"
+                        deviation = abs(sub_value - avg_sub) / avg_sub if avg_sub != 0 else float('inf')
+                        alerts[key][sub_key] = "danger" if deviation > 0.2 else "warning" if deviation > 0.1 else "good"
     
     # Handle position separately
     if "position" in readings:

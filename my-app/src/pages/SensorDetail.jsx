@@ -43,41 +43,51 @@ function SensorDetail({ auth }) {
   const convertToCSV = (data) => {
     if (data.length === 0) return "";
 
-
-    const sample = data[0];
-    const fields = Object.keys(sample).filter(key =>
-      !['_id', 'accelerometer', 'magnetometer', 'gyroscope'].includes(key)
-    );
-
-
-    const nestedFields = [
-      'accelerometer.x', 'accelerometer.y', 'accelerometer.z',
-      'magnetometer.x', 'magnetometer.y', 'magnetometer.z',
-      'gyroscope.x', 'gyroscope.y', 'gyroscope.z'
+    // Define the fields we want to include
+    const fields = [
+      'sensor_id',
+      'timestamp',
+      'status',
+      'adc',
+      'position',
+      'roll',
+      'pitch',
+      'temperature'
     ];
 
-    const allFields = [...fields, ...nestedFields];
-    let csv = allFields.join(',') + '\n';
-    data.forEach(item => {
-      const row = allFields.map(field => {
-        if (field.includes('.')) {
+    // Create header
+    let csv = fields.join(',') + '\n';
 
-          const [parent, child] = field.split('.');
-          return item[parent] && item[parent][child] !== undefined
-            ? item[parent][child]
-            : '';
+    // Add data rows
+    data.forEach(item => {
+      const row = fields.map(field => {
+        let value = '';
+        // Special handling for each field
+        if (field === 'sensor_id') {
+          value = item.sensor_id || '';
+        } else if (field === 'timestamp') {
+          value = item.timestamp || '';
+        } else if (field === 'status') {
+          value = item.status || '';
         } else {
-          return item[field] !== undefined ? item[field] : '';
+          // All other fields come from readings
+          value = item.readings?.[field] ?? '';
         }
+        
+        // Format the value
+        if (typeof value === 'number') {
+          value = value.toFixed(2);
+        }
+        
+        // Escape commas and quotes
+        if (value.toString().includes(',') || value.toString().includes('"')) {
+          value = `"${value.toString().replace(/"/g, '""')}"`;
+        }
+        
+        return value;
       });
 
-
-      csv += row.map(value => {
-        if (value.toString().includes(',')) {
-          return `"${value}"`;
-        }
-        return value;
-      }).join(',') + '\n';
+      csv += row.join(',') + '\n';
     });
 
     return csv;

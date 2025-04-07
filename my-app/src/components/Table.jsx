@@ -1,29 +1,39 @@
 import * as React from "react";
 
-// **Flatten nested objects into columns dynamically**
-const flattenSensorData = (data) => {
-  return data.map((sensor) => {
-    const flattened = {};
+// Define the fields we want to show in the table
+const DISPLAY_FIELDS = [
+  'sensor_id',
+  'timestamp',
+  'status',
+  'adc',
+  'position',
+  'roll',
+  'pitch',
+  'temperature'
+];
 
-    const flatten = (obj, prefix = "") => {
-      Object.entries(obj).forEach(([key, value]) => {
-        const newKey = prefix ? `${prefix}.${key}` : key;
-
-        if (value && typeof value === "object" && !Array.isArray(value)) {
-          flatten(value, newKey); // Recursively flatten nested objects
-        } else {
-          flattened[newKey] =
-            typeof value === "number" ? value.toFixed(2) : value ?? "N/A";
-        }
-      });
-    };
-
-    flatten(sensor);
-    return flattened;
-  });
+// Format field names for display
+const formatFieldName = (field) => {
+  return field.split('_').map(part => 
+    part.charAt(0).toUpperCase() + part.slice(1)
+  ).join(' ');
 };
 
-// **Main Table Component**
+// Format field values
+const formatFieldValue = (value) => {
+  if (value === undefined || value === null) {
+    return 'N/A';
+  }
+  if (typeof value === 'number') {
+    return value.toFixed(2);
+  }
+  if (value instanceof Date) {
+    return new Date(value).toLocaleString();
+  }
+  return value;
+};
+
+// Main Table Component
 export function SensorDataTable({ sensorData }) {
   if (!sensorData || sensorData.length === 0) {
     return (
@@ -33,18 +43,15 @@ export function SensorDataTable({ sensorData }) {
     );
   }
 
-  const flattenedData = flattenSensorData(sensorData);
-  const headers = Object.keys(flattenedData[0]);
-
   return (
     <div className="w-full overflow-x-auto">
       <table className="w-full border-collapse border border-gray-300 shadow-md">
         {/* Table Header */}
         <thead className="bg-gray-100 text-gray-700 uppercase text-sm">
           <tr>
-            {headers.map((key) => (
-              <th key={key} className="border border-gray-300 px-4 py-2 text-left">
-                {key.replace(/\./g, " ")}
+            {DISPLAY_FIELDS.map((field) => (
+              <th key={field} className="border border-gray-300 px-4 py-2 text-left">
+                {formatFieldName(field)}
               </th>
             ))}
           </tr>
@@ -52,20 +59,26 @@ export function SensorDataTable({ sensorData }) {
 
         {/* Table Body */}
         <tbody>
-          {flattenedData.map((row, rowIndex) => (
-            <tr
-              key={rowIndex}
-              className={`${
-                rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50"
-              } hover:bg-gray-200 transition`}
-            >
-              {headers.map((key) => (
-                <td key={key} className="border border-gray-300 px-4 py-2">
-                  {row[key] ?? "-"}
-                </td>
-              ))}
-            </tr>
-          ))}
+          {sensorData.map((row, rowIndex) => {
+            const readings = row.readings || {};
+            return (
+              <tr
+                key={rowIndex}
+                className={`${
+                  rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50"
+                } hover:bg-gray-200 transition`}
+              >
+                {DISPLAY_FIELDS.map((field) => {
+                  const value = readings[field] !== undefined ? readings[field] : row[field];
+                  return (
+                    <td key={field} className="border border-gray-300 px-4 py-2">
+                      {formatFieldValue(value)}
+                    </td>
+                  );
+                })}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

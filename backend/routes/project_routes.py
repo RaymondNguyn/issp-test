@@ -64,6 +64,19 @@ async def list_projects(current_user: str = Depends(get_current_user)):
 
     return projects
 
+@router.get("/api/projects/{project_id}")
+async def get_project_by_id(
+    project_id: str,
+    current_user: str = Depends(get_current_user)
+):
+    project = projects_collection.find_one({"project_id": project_id, "owner_id": current_user})
+    
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found or access denied")
+
+    project["_id"] = str(project["_id"])
+    return project
+
 @router.get("/api/projects/{project_id}/assets", response_model=List[AssetDefinition])
 async def list_project_assets(
     project_id: str,
@@ -94,9 +107,11 @@ async def add_asset_to_project(
     asset_data: Dict[str, Any], 
     current_user: str = Depends(get_current_user)  
 ):
-    name = asset_data.get("asset_name")  # Ensure correct field extraction
+    name = asset_data.get("name")  # Use name instead of asset_name
     description = asset_data.get("description")
     date = asset_data.get("date", None)
+    if date:
+        date = datetime.fromisoformat(date.replace('Z', '+00:00'))
 
     if not name:
         raise HTTPException(status_code=400, detail="Asset name is required")

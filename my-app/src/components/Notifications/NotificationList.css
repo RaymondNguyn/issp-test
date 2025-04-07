@@ -1,0 +1,135 @@
+.notification-list-container {
+  position: fixed;
+  top: 60px;
+  right: 20px;
+  width: 400px;
+  max-height: 80vh;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.notification-header {
+  position: sticky;
+  top: 0;
+  background: white;
+  padding: 15px;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notification-header h2 {
+  margin: 0;
+  font-size: 1.2em;
+  color: #333;
+}
+
+.notification-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 1.5em;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.close-button:hover {
+  color: #343a40;
+}
+
+.notifications-list {
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.notification-item {
+  display: flex;
+  padding: 12px;
+  border-radius: 6px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  gap: 12px;
+  align-items: flex-start;
+  transition: background-color 0.2s;
+}
+
+.notification-item.unread {
+  background: #fff;
+  border-left: 4px solid #007bff;
+}
+
+.notification-icon {
+  font-size: 1.2em;
+  line-height: 1;
+}
+
+.notification-content {
+  flex: 1;
+}
+
+.notification-message {
+  margin: 0 0 5px 0;
+  color: #333;
+  line-height: 1.4;
+}
+
+.notification-meta {
+  display: flex;
+  gap: 10px;
+  font-size: 0.8em;
+  color: #6c757d;
+}
+
+.notification-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.mark-read-button,
+.delete-button {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.2s;
+}
+
+.mark-read-button {
+  background: #007bff;
+  color: white;
+}
+
+.mark-read-button:hover {
+  background: #0056b3;
+}
+
+.delete-button {
+  background: #dc3545;
+  color: white;
+}
+
+.delete-button:hover {
+  background: #c82333;
+}
+
+.loading,
+.no-notifications {
+  text-align: center;
+  color: #6c757d;
+  padding: 20px;
+}

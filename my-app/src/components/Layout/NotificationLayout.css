@@ -1,0 +1,28 @@
+.notification-layout {
+  position: relative;
+  display: inline-block;
+}
+
+.notification-drawer {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 1000;
+  width: 400px;
+  max-height: 600px;
+  overflow-y: auto;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-top: 8px;
+}
+
+@media (max-width: 480px) {
+  .notification-drawer {
+    width: 100vw;
+    position: fixed;
+    right: 0;
+    left: 0;
+    max-height: 80vh;
+  }
+}
